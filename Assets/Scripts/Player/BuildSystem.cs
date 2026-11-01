@@ -94,6 +94,13 @@ public class BuildSystem : MonoBehaviour
         return point;
     }
 
+    public void EnterBuildMode()
+    {
+        Active = true;
+        if (ghost != null) ghost.SetActive(false);
+        Debug.Log("[Build] build mode on (started from inventory)");
+    }
+
     void Place(Vector3 point, float yaw)
     {
         if (Inventory.Instance == null || !Inventory.Instance.Spend("wall", 1))
@@ -112,6 +119,11 @@ public class BuildSystem : MonoBehaviour
         wall.transform.position = point + Vector3.up * 1.25f;
         wall.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         wall.GetComponent<Renderer>().sharedMaterial = wallMat;
+
+        var structure = wall.AddComponent<PlacedStructure>();
+        structure.itemId = "wall";
+        structure.displayName = "Wall";
+
         Debug.Log("[Build] placed wall");
     }
 }

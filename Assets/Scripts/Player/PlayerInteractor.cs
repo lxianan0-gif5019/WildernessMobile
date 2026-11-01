@@ -1,9 +1,7 @@
 using UnityEngine;
 
-// Finds the harvestable resource the player is aiming at, and harvests it on
-// interact. Works from two signals so it is forgiving on touch screens:
-//   1) what the camera ray actually hits
-//   2) fallback: the nearest node close to the player and roughly ahead of the camera
+// Finds what the player is targeting: a harvestable resource, or a structure
+// that was placed earlier and can be picked back up.
 public class PlayerInteractor : MonoBehaviour
 {
     public static PlayerInteractor Instance;
@@ -11,11 +9,15 @@ public class PlayerInteractor : MonoBehaviour
     [Tooltip("Max distance from the PLAYER to a harvestable node.")]
     public float reach = 4f;
 
+    [Tooltip("Max distance from the PLAYER to a placed structure when picking it up.")]
+    public float pickupReach = 5f;
+
     [Tooltip("How far the camera ray is allowed to travel.")]
     public float rayLength = 14f;
 
     public Camera cam;
     public ResourceNode Current { get; private set; }
+    public PlacedStructure CurrentStructure { get; private set; }
 
     ResourceNode[] cached;
     float nextScan;
@@ -28,22 +30,28 @@ public class PlayerInteractor : MonoBehaviour
 
     void Update()
     {
-        Current = FindTarget();
-        if (InputHub.InteractDown && Current != null)
-            Current.Harvest();
+        Current = FindResource();
+        CurrentStructure = FindStructure();
+
+        if (!InputHub.InteractDown) return;
+
+        if (Current != null) { Current.Harvest(); return; }
+
+        // In build mode the build system owns the interact key.
+        if (BuildSystem.Instance != null && BuildSystem.Instance.Active) return;
+
+        if (CurrentStructure != null) CurrentStructure.PickUp();
     }
 
-    ResourceNode FindTarget()
+    ResourceNode FindResource()
     {
         // --- 1) direct ray hit
         if (cam != null)
         {
-            Vector3 origin = cam.transform.position;
-            Vector3 dir = cam.transform.forward;
-            var hits = Physics.RaycastAll(origin, dir, rayLength, ~0, QueryTriggerInteraction.Ignore);
-
+            var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
             float bestRay = float.MaxValue;
             ResourceNode bestNode = null;
+
             foreach (var h in hits)
             {
                 if (h.collider == null) continue;
@@ -58,7 +66,7 @@ public class PlayerInteractor : MonoBehaviour
             if (bestNode != null) return bestNode;
         }
 
-        // --- 2) fallback: nearest node around the player, in front of the camera
+        // --- 2) fallback: nearest node around the player
         if (Time.unscaledTime >= nextScan || cached == null)
         {
             cached = Object.FindObjectsOfType<ResourceNode>();
@@ -74,15 +82,12 @@ public class PlayerInteractor : MonoBehaviour
             float d = Vector3.Distance(n.transform.position, transform.position);
             if (d > reach) continue;
 
-            // Up close, facing does not matter - you clearly mean the thing you are touching.
+            // Up close, facing does not matter.
             if (cam != null && d > 2f)
             {
-                Vector3 to = n.transform.position - cam.transform.position;
-                to.y = 0f;
-                Vector3 fwd = cam.transform.forward;
-                fwd.y = 0f;
-                if (to.sqrMagnitude > 0.0001f && fwd.sqrMagnitude > 0.0001f &&
-                    Vector3.Angle(to, fwd) > 100f) continue;
+                Vector3 to = n.transform.position - cam.transform.position; to.y = 0f;
+                Vector3 fwd = cam.transform.forward; fwd.y = 0f;
+                if (to.sqrMagnitude > 0.0001f && fwd.sqrMagnitude > 0.0001f && Vector3.Angle(to, fwd) > 100f) continue;
             }
 
             if (d < nearestDist) { nearestDist = d; nearest = n; }
@@ -90,9 +95,32 @@ public class PlayerInteractor : MonoBehaviour
         return nearest;
     }
 
+    PlacedStructure FindStructure()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        PlacedStructure found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var s = h.collider.GetComponentInParent<PlacedStructure>();
+            if (s == null) continue;
+            if (Vector3.Distance(s.transform.position, transform.position) > pickupReach) continue;
+
+            if (h.distance < best) { best = h.distance; found = s; }
+        }
+        return found;
+    }
+
     public string Prompt()
     {
-        if (Current == null) return "";
-        return "Harvest " + Current.displayName;
+        if (Current != null) return "Harvest " + Current.displayName;
+        if (CurrentStructure != null) return "Pick up " + CurrentStructure.displayName;
+        return "";
     }
 }

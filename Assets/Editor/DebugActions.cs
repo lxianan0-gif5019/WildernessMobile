@@ -5,6 +5,27 @@ using UnityEditor;
 // gameplay code without a keyboard. Remove them once hand testing is done.
 public static class DebugActions
 {
+    [MenuItem("Wilderness/14. Debug Toggle Inventory")]
+    public static void ToggleInventory()
+    {
+        if (GameUI.Instance == null) { Debug.Log("[Debug] no GameUI"); return; }
+        GameUI.Instance.DebugToggleInventory();
+        Debug.Log("[Debug] inventory panel open=" + GameUI.PanelOpen);
+    }
+
+    [MenuItem("Wilderness/13. Debug Take Wall From Bag")]
+    public static void TakeWall()
+    {
+        if (GameUI.Instance == null) { Debug.Log("[Debug] no GameUI"); return; }
+        var inv = Inventory.Instance;
+        if (inv == null) { Debug.Log("[Debug] no Inventory"); return; }
+        if (inv.Count("wall") == 0) inv.Add("wall", 1);
+
+        GameUI.Instance.OnItemClicked("wall");
+        bool active = BuildSystem.Instance != null && BuildSystem.Instance.Active;
+        Debug.Log("[Debug] after OnItemClicked(wall): buildMode=" + active + " walls=" + inv.Count("wall") + " panelOpen=" + GameUI.PanelOpen);
+    }
+
     [MenuItem("Wilderness/12. Debug Toggle Craft Panel")]
     public static void ToggleCraftPanel()
     {

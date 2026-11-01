@@ -20,6 +20,10 @@ public class GameUI : MonoBehaviour
     GameObject invPanel, craftPanel;
     bool invOpen, craftOpen;
 
+    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall" };
+    readonly Text[] invLabels = new Text[5];
+    readonly GameObject[] invRows = new GameObject[5];
+
     void Awake()
     {
         Instance = this;
@@ -120,6 +124,10 @@ public class GameUI : MonoBehaviour
         // Inventory panel
         invPanel = MakePanel(root, "InventoryPanel", "INVENTORY", out invText);
         invPanel.SetActive(false);
+        MakeInventoryRows(invPanel.transform);
+        Anchor(invText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(700f, 42f), new Vector2(0.5f, 0f));
+        invText.alignment = TextAnchor.MiddleCenter;
+        invText.fontSize = 24;
 
         // Crafting panel
         craftPanel = MakePanel(root, "CraftPanel", "CRAFTING", out craftText);
@@ -228,14 +236,66 @@ public class GameUI : MonoBehaviour
     /// <summary>Test hook: opens/closes the crafting panel exactly like pressing C.</summary>
     public void DebugToggleCraft() { Toggle(ref craftOpen, craftPanel); }
 
+    /// <summary>Test hook: opens/closes the inventory exactly like pressing Tab.</summary>
+    public void DebugToggleInventory() { Toggle(ref invOpen, invPanel); }
+
+    void MakeInventoryRows(Transform panel)
+    {
+        for (int i = 0; i < InvItems.Length; i++)
+        {
+            var img = MakeImage(panel, "Row_" + InvItems[i], new Color(1f, 1f, 1f, 0.10f), circle);
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -110f - i * 66f), new Vector2(640f, 58f), new Vector2(0.5f, 1f));
+
+            var label = MakeText(img.rectTransform, "Label", "", 26, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 52f), new Vector2(0f, 0.5f));
+
+            var btn = img.gameObject.AddComponent<ItemButton>();
+            btn.itemId = InvItems[i];
+            btn.owner = this;
+
+            invLabels[i] = label;
+            invRows[i] = img.gameObject;
+        }
+    }
+
+    /// <summary>Clicking a row in the backpack. Only walls are placeable right now.</summary>
+    public void OnItemClicked(string id)
+    {
+        if (id == "wall")
+        {
+            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode();
+            invOpen = false; if (invPanel != null) invPanel.SetActive(false);
+            craftOpen = false; if (craftPanel != null) craftPanel.SetActive(false);
+            RefreshCursor();
+            Debug.Log("[UI] took a Wall out of the backpack - build mode on");
+        }
+        else
+        {
+            Debug.Log("[UI] " + ItemDatabase.Display(id) + " is a material, not a placeable item");
+        }
+    }
+
     void RefreshInventory()
     {
-        if (invText == null || Inventory.Instance == null) return;
-        var sb = new System.Text.StringBuilder();
-        if (Inventory.Instance.items.Count == 0) sb.Append("(nothing yet)");
-        foreach (var s in Inventory.Instance.items)
-            sb.Append(ItemDatabase.Display(s.id)).Append("    x").Append(s.count).Append("\n\n");
-        invText.text = sb.ToString();
+        if (Inventory.Instance == null) return;
+
+        bool any = false;
+        for (int i = 0; i < InvItems.Length; i++)
+        {
+            int count = Inventory.Instance.Count(InvItems[i]);
+            if (count > 0) any = true;
+
+            if (invLabels[i] != null)
+                invLabels[i].text = ItemDatabase.Display(InvItems[i]) + "        x" + count;
+
+            if (invRows[i] != null)
+                invRows[i].SetActive(count > 0);
+        }
+
+        if (invText != null)
+            invText.text = any
+                ? "Tap Wall to take it out and build"
+                : "(nothing yet - go harvest a tree with E)";
     }
 
     void RefreshCraft()
