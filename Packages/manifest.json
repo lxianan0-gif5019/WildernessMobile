@@ -33,6 +33,7 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.gamelovers.mcp-unity": "https://github.com/CoderGamester/mcp-unity.git#382a43a30f4dab4c7f02d770b4ec7d084813bbe4"
   }
 }

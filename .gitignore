@@ -67,3 +67,8 @@ crashlytics-build.properties
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---------------------------------------------------------------
+# Agent scratch files (command channel / screenshots)
+# ---------------------------------------------------------------
+.agent/
