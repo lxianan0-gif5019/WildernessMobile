@@ -40,8 +40,8 @@ public class ThirdPersonController : MonoBehaviour
         bool grounded = cc.isGrounded;
         if (grounded && verticalVelocity.y < 0f) verticalVelocity.y = -2f;
 
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        float h = InputHub.Move.x;
+        float v = InputHub.Move.y;
         Vector3 input = Vector3.ClampMagnitude(new Vector3(h, 0f, v), 1f);
 
         Vector3 moveDir = Vector3.zero;
@@ -65,7 +65,7 @@ public class ThirdPersonController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, look, turnSpeed * Time.deltaTime);
         }
 
-        if (grounded && Input.GetButtonDown("Jump"))
+        if (grounded && InputHub.JumpDown)
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
         verticalVelocity.y += gravity * Time.deltaTime;
