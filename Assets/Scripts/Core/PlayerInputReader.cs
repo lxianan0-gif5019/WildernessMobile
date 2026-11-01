@@ -25,6 +25,8 @@ public class PlayerInputReader : MonoBehaviour
         InputHub.JumpHeld = Input.GetButton("Jump");
         if (Input.GetButtonDown("Jump")) InputHub.JumpDown = true;
 
+        InputHub.SprintHeld = Input.GetKey(KeyCode.LeftShift);
+
         if (Input.GetKeyDown(KeyCode.E)) InputHub.InteractDown = true;
         if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.I)) InputHub.InventoryDown = true;
         if (Input.GetKeyDown(KeyCode.C)) InputHub.CraftDown = true;

@@ -8,6 +8,7 @@ public static class InputHub
     public static Vector2 LookDelta;     // accumulated look motion this frame
     public static bool JumpHeld;
     public static bool JumpDown;
+    public static bool SprintHeld;
     public static bool InteractDown;
     public static bool InventoryDown;
     public static bool CraftDown;

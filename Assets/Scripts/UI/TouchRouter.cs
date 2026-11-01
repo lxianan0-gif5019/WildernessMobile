@@ -120,6 +120,8 @@ public class TouchRouter : MonoBehaviour
         float magnitude = offset.magnitude;
         InputHub.Move = magnitude < stickDeadZone ? Vector2.zero : offset;
         InputHub.TouchMoveActive = magnitude >= stickDeadZone;
+        // Pushing the stick all the way out sprints (there is no shift key on a phone).
+        InputHub.SprintHeld = magnitude >= 0.95f;
     }
 
     void ReleaseStick()
@@ -128,6 +130,7 @@ public class TouchRouter : MonoBehaviour
         if (stickKnob != null) stickKnob.anchoredPosition = Vector2.zero;
         InputHub.Move = Vector2.zero;
         InputHub.TouchMoveActive = false;
+        InputHub.SprintHeld = false;
     }
 
     // ------------------------------------------------------------------ mouse
