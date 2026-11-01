@@ -44,7 +44,19 @@ public class GameUI : MonoBehaviour
         }
 
         if (prompt != null)
-            prompt.text = PlayerInteractor.Instance != null ? PlayerInteractor.Instance.Prompt() : "";
+        {
+            if (BuildSystem.Instance != null && BuildSystem.Instance.Active)
+            {
+                int walls = Inventory.Instance != null ? Inventory.Instance.Count("wall") : 0;
+                prompt.text = walls > 0
+                    ? "BUILD MODE   -   press B to exit,   E to place     Wall: " + walls
+                    : "BUILD MODE   -   press B to exit     no Wall - craft one (C: 2 Plank)";
+            }
+            else
+            {
+                prompt.text = PlayerInteractor.Instance != null ? PlayerInteractor.Instance.Prompt() : "";
+            }
+        }
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();

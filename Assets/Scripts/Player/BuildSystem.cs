@@ -29,7 +29,10 @@ public class BuildSystem : MonoBehaviour
         Object.Destroy(ghost.GetComponent<Collider>());
         ghostMat = new Material(shader);
         ghostMat.color = new Color(0.45f, 0.85f, 1f, 1f);
-        ghost.GetComponent<Renderer>().sharedMaterial = ghostMat;
+        var ghostRenderer = ghost.GetComponent<Renderer>();
+        ghostRenderer.sharedMaterial = ghostMat;
+        ghostRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        ghostRenderer.receiveShadows = false;
         ghost.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
         ghost.SetActive(false);
 
@@ -51,10 +54,16 @@ public class BuildSystem : MonoBehaviour
         Vector3 point = AimPoint();
         float yaw = cam.transform.eulerAngles.y;
 
+        // Only show the preview when the wall can actually be placed.
+        bool hasWall = Inventory.Instance != null && Inventory.Instance.Count("wall") > 0;
         if (ghost != null)
         {
-            ghost.transform.position = point + Vector3.up * 1.25f;
-            ghost.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            ghost.SetActive(hasWall);
+            if (hasWall)
+            {
+                ghost.transform.position = point + Vector3.up * 1.25f;
+                ghost.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
         }
 
         bool aimingAtResource = PlayerInteractor.Instance != null && PlayerInteractor.Instance.Current != null;
