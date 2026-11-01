@@ -173,7 +173,7 @@ public class GameUI : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ actions
-    void Craft(string recipe)
+    public void Craft(string recipe)
     {
         var inv = Inventory.Instance;
         if (inv == null) return;

@@ -107,17 +107,12 @@ public static class DebugActions
         if (inv == null) { Debug.Log("[Debug] no inventory"); return; }
 
         inv.Add("wood", 30);
-        var craft = new GameObject("DebugCraft").AddComponent<CraftButton>();
-        craft.recipeName = "Plank";
-        craft.craftRepeat = 5;
-        var evt = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
-        craft.OnPointerDown(evt);
-
-        craft.recipeName = "Wall";
-        craft.craftRepeat = 2;
-        craft.OnPointerDown(evt);
-
-        Object.DestroyImmediate(craft.gameObject);
+        if (GameUI.Instance != null)
+        {
+            for (int i = 0; i < 5; i++) GameUI.Instance.Craft("Plank");
+            for (int i = 0; i < 2; i++) GameUI.Instance.Craft("Wall");
+        }
+        else Debug.Log("[Debug] no GameUI instance - crafting skipped");
         Debug.Log("[Debug] after crafting wood=" + inv.Count("wood") + " plank=" + inv.Count("plank") + " wall=" + inv.Count("wall"));
     }
 }
