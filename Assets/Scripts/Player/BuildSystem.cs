@@ -14,6 +14,7 @@ public class BuildSystem : MonoBehaviour
     GameObject ghost;
     Material ghostMat;
     Material wallMat;
+    float nextHint;
 
     void Awake()
     {
@@ -47,12 +48,9 @@ public class BuildSystem : MonoBehaviour
 
         if (!Active || cam == null) return;
 
-        Vector3 point = cam.transform.position + cam.transform.forward * range;
-        RaycastHit hit;
-        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, range * 1.6f))
-            point = hit.point;
-
+        Vector3 point = AimPoint();
         float yaw = cam.transform.eulerAngles.y;
+
         if (ghost != null)
         {
             ghost.transform.position = point + Vector3.up * 1.25f;
@@ -63,11 +61,39 @@ public class BuildSystem : MonoBehaviour
         if (InputHub.InteractDown && !aimingAtResource) Place(point, yaw);
     }
 
+    // Nearest hit in front of the camera that is not the player and not the ghost.
+    Vector3 AimPoint()
+    {
+        Vector3 origin = cam.transform.position;
+        Vector3 fallback = origin + cam.transform.forward * range;
+
+        var hits = Physics.RaycastAll(origin, cam.transform.forward, range * 1.6f, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        Vector3 point = fallback;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (ghost != null && h.collider.gameObject == ghost) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+            if (h.distance < best) { best = h.distance; point = h.point; }
+        }
+
+        // Never let the preview sit on top of the camera.
+        Vector3 flat = point - origin;
+        if (flat.magnitude < 2f) point = origin + cam.transform.forward * 2f;
+        return point;
+    }
+
     void Place(Vector3 point, float yaw)
     {
         if (Inventory.Instance == null || !Inventory.Instance.Spend("wall", 1))
         {
-            Debug.Log("[Build] need 1 Wall (craft walls first)");
+            if (Time.unscaledTime >= nextHint)
+            {
+                nextHint = Time.unscaledTime + 1.5f;
+                Debug.Log("[Build] need 1 Wall - open Craft (C) and make one from 2 Planks");
+            }
             return;
         }
 
