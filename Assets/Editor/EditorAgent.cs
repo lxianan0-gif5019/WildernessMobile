@@ -92,6 +92,12 @@ public static class EditorAgent
             }
             catch { }
             try { File.WriteAllText(ResultPath, JsonUtility.ToJson(result, true)); } catch { }
+
+            // Consume the command: a domain reload (which happens on entering Play
+            // mode) resets the static state, and a leftover cmd.json would be
+            // replayed - which used to stop Play mode right after starting it.
+            try { File.Delete(CmdPath); } catch { }
+
             busy = false;
         }
     }
