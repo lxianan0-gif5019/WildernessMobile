@@ -131,6 +131,31 @@ public static class BuildTool
         }
     }
 
+    // Same build, but callable from the editor menu without quitting Unity.
+    [MenuItem("Wilderness/16. Build APK")]
+    public static void BuildApkFromMenu()
+    {
+        try
+        {
+            var opts = new BuildPlayerOptions
+            {
+                scenes = new[] { ScenePath },
+                locationPathName = ApkPath,
+                target = BuildTarget.Android,
+                options = BuildOptions.Development
+            };
+            Debug.Log("[BuildTool] APK build started");
+            var report = BuildPipeline.BuildPlayer(opts);
+            var s = report.summary;
+            Debug.Log("[BuildTool] APK result: " + s.result + " | errors=" + s.totalErrors
+                      + " | size=" + s.totalSize + " | time=" + s.totalTime);
+        }
+        catch (Exception e)
+        {
+            Debug.Log("[BuildTool] APK build failed: " + e);
+        }
+    }
+
     // ------------------------------------------------------------- helpers
     static void SetBool(SerializedObject so, string p, bool v)
     { var x = so.FindProperty(p); if (x != null) x.boolValue = v; else Debug.Log("[BuildTool] WARN missing " + p); }

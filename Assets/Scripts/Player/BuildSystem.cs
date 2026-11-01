@@ -101,6 +101,22 @@ public class BuildSystem : MonoBehaviour
         Debug.Log("[Build] build mode on (started from inventory)");
     }
 
+    /// <summary>Spawns a wall at an exact world position (used by placing and by load).</summary>
+    public GameObject CreateWall(Vector3 worldPosition, float yaw)
+    {
+        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        wall.name = "Wall";
+        wall.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
+        wall.transform.position = worldPosition;
+        wall.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        wall.GetComponent<Renderer>().sharedMaterial = wallMat;
+
+        var structure = wall.AddComponent<PlacedStructure>();
+        structure.itemId = "wall";
+        structure.displayName = "Wall";
+        return wall;
+    }
+
     void Place(Vector3 point, float yaw)
     {
         if (Inventory.Instance == null || !Inventory.Instance.Spend("wall", 1))
@@ -113,17 +129,7 @@ public class BuildSystem : MonoBehaviour
             return;
         }
 
-        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        wall.name = "Wall";
-        wall.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
-        wall.transform.position = point + Vector3.up * 1.25f;
-        wall.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-        wall.GetComponent<Renderer>().sharedMaterial = wallMat;
-
-        var structure = wall.AddComponent<PlacedStructure>();
-        structure.itemId = "wall";
-        structure.displayName = "Wall";
-
+        CreateWall(point + Vector3.up * 1.25f, yaw);
         Debug.Log("[Build] placed wall");
     }
 }

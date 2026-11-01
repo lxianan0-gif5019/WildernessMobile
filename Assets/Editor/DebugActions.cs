@@ -5,6 +5,21 @@ using UnityEditor;
 // gameplay code without a keyboard. Remove them once hand testing is done.
 public static class DebugActions
 {
+    [MenuItem("Wilderness/17. Debug Save Now")]
+    public static void SaveNow()
+    {
+        if (SaveSystem.Instance == null) { Debug.Log("[Debug] no SaveSystem"); return; }
+        SaveSystem.Instance.Save();
+        Debug.Log("[Debug] save file = " + SaveSystem.Instance.FilePath + " exists=" + System.IO.File.Exists(SaveSystem.Instance.FilePath));
+    }
+
+    [MenuItem("Wilderness/18. Debug Load Now")]
+    public static void LoadNow()
+    {
+        if (SaveSystem.Instance == null) { Debug.Log("[Debug] no SaveSystem"); return; }
+        SaveSystem.Instance.Load();
+    }
+
     [MenuItem("Wilderness/14. Debug Toggle Inventory")]
     public static void ToggleInventory()
     {
