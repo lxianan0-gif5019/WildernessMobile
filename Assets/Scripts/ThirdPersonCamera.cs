@@ -57,9 +57,13 @@ public class ThirdPersonCamera : MonoBehaviour
     {
         if (target == null) return;
 
-        yaw += InputHub.LookDelta.x * mouseSensitivity;
-        pitch -= InputHub.LookDelta.y * mouseSensitivity;
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        // While a menu panel is open the cursor is free, so it must not turn the camera.
+        if (!GameUI.PanelOpen)
+        {
+            yaw += InputHub.LookDelta.x * mouseSensitivity;
+            pitch -= InputHub.LookDelta.y * mouseSensitivity;
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        }
 
         // Smooth the *angles*, not the transform: this removes the snap that makes
         // fast turns feel dizzy, without adding lag to the follow position.

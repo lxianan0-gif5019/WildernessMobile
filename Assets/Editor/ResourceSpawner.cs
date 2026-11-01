@@ -20,11 +20,11 @@ public static class ResourceSpawner
         Vector3 centre = player != null ? player.transform.position : new Vector3(300f, 0f, 300f);
 
         var woodMat = Mat("HarvestWood", new Color(0.36f, 0.24f, 0.14f));
-        var leafMat = Mat("HarvestLeaf", new Color(0.16f, 0.34f, 0.12f));
+        var leafMat = Mat("HarvestLeaf", new Color(0.42f, 0.68f, 0.20f));
         var stoneMat = Mat("HarvestStone", new Color(0.52f, 0.52f, 0.55f));
         var bushMat = Mat("HarvestBush", new Color(0.28f, 0.45f, 0.18f));
 
-        int trees = SpawnTrees(root.transform, terrain, centre, woodMat, leafMat, 45);
+        int trees = SpawnTrees(root.transform, terrain, centre, woodMat, leafMat, 60);
         int rocks = SpawnRocks(root.transform, terrain, centre, stoneMat, 30);
         int bushes = SpawnBushes(root.transform, terrain, centre, bushMat, 25);
 
@@ -67,7 +67,7 @@ public static class ResourceSpawner
         var rnd = new System.Random(4242);
         for (int i = 0; i < count; i++)
         {
-            var pos = SampleGround(terrain, centre, rnd, 8f, 110f);
+            var pos = SampleGround(terrain, centre, rnd, 6f, 70f);
             var go = new GameObject("Tree");
             go.transform.SetParent(root, false);
             go.transform.position = pos;

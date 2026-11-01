@@ -9,6 +9,10 @@ public class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
+    /// <summary>True while a menu panel is open: the cursor must be free and the
+    /// camera must stop taking look input.</summary>
+    public static bool PanelOpen { get; private set; }
+
     Font font;
     Sprite circle;
 
@@ -109,6 +113,8 @@ public class GameUI : MonoBehaviour
         craftPanel = MakePanel(root, "CraftPanel", "CRAFTING", out craftText);
         craftPanel.SetActive(false);
         MakeCraftButtons(craftPanel.transform);
+
+        RefreshCursor();
     }
 
     GameObject MakePanel(Transform parent, string name, string title, out Text body)
@@ -193,11 +199,22 @@ public class GameUI : MonoBehaviour
         return t;
     }
 
-    static void Toggle(ref bool state, GameObject panel)
+    void Toggle(ref bool state, GameObject panel)
     {
         state = !state;
         if (panel != null) panel.SetActive(state);
+        RefreshCursor();
     }
+
+    void RefreshCursor()
+    {
+        PanelOpen = invOpen || craftOpen;
+        Cursor.lockState = PanelOpen ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = PanelOpen;
+    }
+
+    /// <summary>Test hook: opens/closes the crafting panel exactly like pressing C.</summary>
+    public void DebugToggleCraft() { Toggle(ref craftOpen, craftPanel); }
 
     void RefreshInventory()
     {
