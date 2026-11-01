@@ -92,13 +92,14 @@ public class GameUI : MonoBehaviour
         joystick.radius = 90f;
 
         // Jump + interact
-        MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0f), new Vector2(-190f, 190f), 160f, TouchButton.Kind.Jump);
-        MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0f), new Vector2(-190f, 380f), 150f, TouchButton.Kind.Interact);
+        // Action buttons: one right-hand column, evenly spaced (no overlap).
+        MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0f), new Vector2(-100f, 150f), 130f, TouchButton.Kind.Jump);
+        MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0f), new Vector2(-100f, 340f), 130f, TouchButton.Kind.Interact);
+        MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 0f), new Vector2(-100f, 530f), 130f, TouchButton.Kind.Build);
 
-        // Top-right buttons
-        MakeButton(root, "BagBtn", "Bag", new Vector2(1f, 1f), new Vector2(-110f, -80f), 140f, TouchButton.Kind.Inventory);
-        MakeButton(root, "CraftBtn", "Craft", new Vector2(1f, 1f), new Vector2(-110f, -240f), 140f, TouchButton.Kind.Craft);
-        MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 1f), new Vector2(-110f, -400f), 140f, TouchButton.Kind.Build);
+        // Menu buttons top-right
+        MakeButton(root, "BagBtn", "Bag", new Vector2(1f, 1f), new Vector2(-90f, -90f), 130f, TouchButton.Kind.Inventory);
+        MakeButton(root, "CraftBtn", "Craft", new Vector2(1f, 1f), new Vector2(-90f, -230f), 130f, TouchButton.Kind.Craft);
 
         // Inventory panel
         invPanel = MakePanel(root, "InventoryPanel", "INVENTORY", out invText);

@@ -10,9 +10,13 @@ public class ThirdPersonCamera : MonoBehaviour
     public Transform target;
     public float distance = 5f;
     public float height = 1.6f;
-    public float mouseSensitivity = 3f;
+    public float mouseSensitivity = 1.6f;
     public float minPitch = -15f;
     public float maxPitch = 65f;
+
+    [Header("Look feel")]
+    [Tooltip("Seconds of smoothing applied to the look direction. Higher = softer, less dizzy.")]
+    public float lookSmoothing = 0.05f;
 
     [Header("Smoothing")]
     [Tooltip("How fast the camera tracks the player horizontally / sideways.")]
@@ -26,6 +30,10 @@ public class ThirdPersonCamera : MonoBehaviour
 
     float yaw;
     float pitch = 18f;
+    float yawShown;
+    float pitchShown;
+    float yawVelocity;
+    float pitchVelocity;
     Vector3 focusSmoothed;
     bool hasFocus;
 
@@ -38,6 +46,8 @@ public class ThirdPersonCamera : MonoBehaviour
         }
 
         if (target != null) yaw = target.eulerAngles.y;
+        yawShown = yaw;
+        pitchShown = pitch;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -51,6 +61,11 @@ public class ThirdPersonCamera : MonoBehaviour
         pitch -= InputHub.LookDelta.y * mouseSensitivity;
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
+        // Smooth the *angles*, not the transform: this removes the snap that makes
+        // fast turns feel dizzy, without adding lag to the follow position.
+        yawShown = Mathf.SmoothDampAngle(yawShown, yaw, ref yawVelocity, lookSmoothing, Mathf.Infinity, Time.unscaledDeltaTime);
+        pitchShown = Mathf.SmoothDampAngle(pitchShown, pitch, ref pitchVelocity, lookSmoothing, Mathf.Infinity, Time.unscaledDeltaTime);
+
         // --- focus point: horizontal and vertical are smoothed at different rates
         Vector3 focusTarget = target.position + Vector3.up * height;
         if (!hasFocus) { focusSmoothed = focusTarget; hasFocus = true; }
@@ -61,9 +76,8 @@ public class ThirdPersonCamera : MonoBehaviour
         focusSmoothed.z = Mathf.Lerp(focusSmoothed.z, focusTarget.z, th);
         focusSmoothed.y = Mathf.Lerp(focusSmoothed.y, focusTarget.y, tv);
 
-        // --- orientation
-        Quaternion wanted = Quaternion.Euler(pitch, yaw, 0f);
-        Quaternion smoothedRot = Quaternion.Slerp(transform.rotation, wanted, th);
+        // --- orientation (angles are already smoothed above, so no extra slerp)
+        Quaternion smoothedRot = Quaternion.Euler(pitchShown, yawShown, 0f);
 
         // --- position from the smoothed orientation (keeps camera and look direction in sync)
         Vector3 desired = focusSmoothed - smoothedRot * Vector3.forward * distance;
