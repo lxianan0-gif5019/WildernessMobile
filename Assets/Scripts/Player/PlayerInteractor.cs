@@ -60,8 +60,12 @@ public class PlayerInteractor : MonoBehaviour
         // Hunting comes first: if you are aiming at an animal, that is the intent.
         if (CurrentAnimal != null) { CurrentAnimal.TakeDamage(attackDamage); return; }
 
-        // Cooking at a fire beats picking it up.
-        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) { CurrentCampfire.Cook(); return; }
+        // Cooking at a fire beats picking it up; otherwise feed it wood.
+        if (CurrentCampfire != null)
+        {
+            if (CurrentCampfire.HasMeat() && CurrentCampfire.Cook()) return;
+            if (CurrentCampfire.AddFuel()) return;
+        }
 
         // Sleeping beats picking the bed up.
         if (CurrentSleep != null)
@@ -85,6 +89,8 @@ public class PlayerInteractor : MonoBehaviour
             }
             Current.Harvest(HarvestPower());
             if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Chop);
+            Debris.Burst(Current != null ? Current.transform.position + Vector3.up : transform.position + transform.forward,
+                         new Color(0.45f, 0.30f, 0.16f), 6);
             return;
         }
 
@@ -205,9 +211,17 @@ public class PlayerInteractor : MonoBehaviour
     {
         var inv = Inventory.Instance;
         if (inv == null) return 1f;
-        if (inv.Count("iron_axe") > 0 || inv.Count("iron_pick") > 0) return 3f;
-        if (inv.Count("stone_axe") > 0 || inv.Count("stone_pick") > 0) return 2f;
-        return 1f;
+
+        string tool = "";
+        float power = 1f;
+
+        if (inv.Count("iron_axe") > 0) { tool = "iron_axe"; power = 3f; }
+        else if (inv.Count("iron_pick") > 0) { tool = "iron_pick"; power = 3f; }
+        else if (inv.Count("stone_axe") > 0) { tool = "stone_axe"; power = 2f; }
+        else if (inv.Count("stone_pick") > 0) { tool = "stone_pick"; power = 2f; }
+
+        if (tool != "" && ToolWear.Instance != null) ToolWear.Instance.Use(tool);
+        return power;
     }
 
     WaterSource FindWater()
@@ -316,7 +330,9 @@ public class PlayerInteractor : MonoBehaviour
             return CurrentSleep.CanSleep(out why) ? Loc.T("prompt.sleep") : Loc.F("prompt.sleep_block", why);
         }
         if (CurrentAnimal != null) return Loc.F("prompt.hit", Loc.ItemName(CurrentAnimal.kind.ToString().ToLowerInvariant()));
-        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return Loc.T("prompt.cook");
+        if (CurrentCampfire != null && CurrentCampfire.HasMeat() && CurrentCampfire.IsBurning) return Loc.T("prompt.cook");
+        if (CurrentCampfire != null && !CurrentCampfire.IsBurning) return Loc.T("prompt.fire_out");
+        if (CurrentCampfire != null) return Loc.T("prompt.refuel");
         if (Current != null) return Loc.F("prompt.harvest", Loc.ItemName(Current.itemId));
         if (CurrentWater != null) return Loc.T("prompt.drink");
         if (CurrentStructure != null) return Loc.F("prompt.pickup_str", Loc.ItemName(CurrentStructure.itemId));

@@ -115,6 +115,13 @@ public class ItemPickup : MonoBehaviour
         if (collected) return;
         if (Inventory.Instance != null) Inventory.Instance.Add(itemId, amount);
         if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Pickup);
+
+        // flourish: the item flies up into the backpack
+        Vector3 target = transform.position + Vector3.up;
+        var p = GameObject.FindWithTag("Player");
+        if (p != null) target = p.transform.position + Vector3.up * 1.2f;
+        FlyItem.Spawn(transform.position, target, ItemDatabase.ItemColor(itemId));
+
         Release();
     }
 

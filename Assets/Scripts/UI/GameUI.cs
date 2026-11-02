@@ -52,6 +52,7 @@ public class GameUI : MonoBehaviour
         if (GetComponent<Diagnostics>() == null) gameObject.AddComponent<Diagnostics>();
         if (GetComponent<MenuUI>() == null) gameObject.AddComponent<MenuUI>();
         if (GetComponent<Tutorial>() == null) gameObject.AddComponent<Tutorial>();
+        if (GetComponent<ToolWear>() == null) gameObject.AddComponent<ToolWear>();
 
         Build();
         RefreshCursor();
@@ -72,6 +73,14 @@ public class GameUI : MonoBehaviour
             var cc = CraftingController.Instance;
             if (cc != null && cc.Busy)
                 hud.text += "      " + Loc.F("hud.crafting", ItemDatabase.Display(cc.active.outputId), Mathf.RoundToInt(cc.Progress * 100f));
+
+            var tw = ToolWear.Instance;
+            if (tw != null)
+            {
+                string best = tw.BestTool();
+                if (best != "")
+                    hud.text += "      " + Loc.ItemName(best) + " " + Mathf.CeilToInt(tw.Left(best)) + "/" + Mathf.CeilToInt(tw.MaxFor(best));
+            }
         }
 
         if (prompt != null)
@@ -92,6 +101,7 @@ public class GameUI : MonoBehaviour
 
         UpdateStatBars();
         UpdateDamageFeedback();
+        UpdateFireAudio();
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
@@ -248,6 +258,16 @@ public class GameUI : MonoBehaviour
             objective.text = t != null ? Loc.T("tut.title") + ":  " + t.Objective() : "";
             objective.color = (t != null && t.Done) ? new Color(0.6f, 0.95f, 0.6f) : new Color(1f, 0.93f, 0.55f);
         }
+    }
+
+    void UpdateFireAudio()
+    {
+        if (AudioManager.Instance == null || PlayerStats.Instance == null) return;
+
+        var pos = PlayerStats.Instance.transform.position;
+        var fire = Campfire.Nearest(pos);
+        bool near = fire != null && fire.IsBurning && Vector3.Distance(fire.transform.position, pos) < 15f;
+        AudioManager.Instance.SetFireLoop(near, near ? fire.transform : null);
     }
 
     void UpdateStatBars()

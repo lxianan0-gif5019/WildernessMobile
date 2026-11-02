@@ -172,8 +172,41 @@ public class Animal : MonoBehaviour
     void Die()
     {
         state = State.Dead;
-        if (Inventory.Instance != null) Inventory.Instance.Add(dropItem, dropAmount);
+
+        // animals now drop pickups on the ground, not straight into the bag
+        if (Inventory.Instance != null)
+        {
+            Vector3 at = transform.position + Vector3.up * 0.4f;
+            for (int i = 0; i < dropAmount; i++)
+                ItemPickup.Spawn(dropItem, 1, at + Random.insideUnitSphere * 0.5f);
+        }
+
         Debug.Log("[Animal] " + displayName + " died, dropped " + dropItem + " x" + dropAmount);
-        Destroy(gameObject, 0.1f);
+
+        var col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        StartCoroutine(FadeOut());
+    }
+
+    // topple over and shrink away instead of popping out of existence
+    System.Collections.IEnumerator FadeOut()
+    {
+        Vector3 startScale = transform.localScale;
+        Quaternion startRot = transform.rotation;
+        Quaternion endRot = startRot * Quaternion.Euler(0f, 0f, 80f);
+
+        float t = 0f;
+        const float duration = 0.55f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float p = t / duration;
+            transform.rotation = Quaternion.Slerp(startRot, endRot, p);
+            transform.localScale = Vector3.Lerp(startScale, startScale * 0.1f, p);
+            transform.position += Vector3.down * 0.35f * Time.deltaTime;
+            yield return null;
+        }
+        Destroy(gameObject);
     }
 }

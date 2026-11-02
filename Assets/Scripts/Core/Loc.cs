@@ -66,6 +66,8 @@ public static class Loc
         { "prompt.pickup",      new[] { "Pick up {0} x{1}", "拾取 {0} x{1}" } },
         { "prompt.drink",       new[] { "Drink {0}",       "喝水" } },
         { "prompt.cook",        new[] { "Cook meat",       "烤肉" } },
+        { "prompt.refuel",      new[] { "Add wood to fire", "添柴" } },
+        { "prompt.fire_out",    new[] { "Fire is out - add wood", "火灭了，添柴" } },
         { "prompt.sleep",       new[] { "Sleep",           "睡觉" } },
         { "prompt.sleep_block", new[] { "Sleep ({0})",     "睡觉（{0}）" } },
         { "prompt.hit",         new[] { "Hit {0}",         "攻击 {0}" } },

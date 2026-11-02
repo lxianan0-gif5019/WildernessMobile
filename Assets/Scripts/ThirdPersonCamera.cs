@@ -99,5 +99,24 @@ public class ThirdPersonCamera : MonoBehaviour
 
         transform.position = desired;
         transform.rotation = smoothedRot;
+
+        // --- hit shake (decays fast; harmless when zero)
+        if (shake > 0.0001f)
+        {
+            shake = Mathf.Max(0f, shake - Time.deltaTime * 2.2f);
+            float s = shake * shake;
+            transform.position += new Vector3(
+                (Random.value * 2f - 1f) * s * 0.5f,
+                (Random.value * 2f - 1f) * s * 0.5f,
+                0f);
+        }
+    }
+
+    float shake;
+
+    /// <summary>Brief camera shake, 0..1.</summary>
+    public void Shake(float amount)
+    {
+        shake = Mathf.Clamp(shake + amount, 0f, 1f);
     }
 }
