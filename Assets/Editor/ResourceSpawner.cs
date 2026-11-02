@@ -27,8 +27,9 @@ public static class ResourceSpawner
         int trees = SpawnTrees(root.transform, terrain, centre, woodMat, leafMat, 60);
         int rocks = SpawnRocks(root.transform, terrain, centre, stoneMat, 30);
         int bushes = SpawnBushes(root.transform, terrain, centre, bushMat, 25);
+        SpawnWaterPool(root.transform, terrain, centre, Mat("WaterPool", new Color(0.18f, 0.45f, 0.75f)));
 
-        Debug.Log("[ResourceSpawner] trees=" + trees + " rocks=" + rocks + " bushes=" + bushes);
+        Debug.Log("[ResourceSpawner] trees=" + trees + " rocks=" + rocks + " bushes=" + bushes + " water=1");
     }
 
     static Material Mat(string name, Color c)
@@ -162,7 +163,36 @@ public static class ResourceSpawner
             node.displayName = "Bush";
             node.hitsToHarvest = 1;
             node.amountPerHit = 3;
+            node.extraItemId = "berry";
+            node.extraAmount = 2;
         }
         return count;
+    }
+
+    // A small pool close to the player so the thirst bar is survivable.
+    static void SpawnWaterPool(Transform root, Terrain terrain, Vector3 centre, Material water)
+    {
+        Vector3 pos = centre + new Vector3(12f, 0f, 6f);
+        if (terrain != null) pos.y = terrain.SampleHeight(pos) + terrain.transform.position.y;
+
+        var go = new GameObject("WaterPool");
+        go.transform.SetParent(root, false);
+        go.transform.position = pos;
+
+        var body = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        body.name = "Body";
+        Object.DestroyImmediate(body.GetComponent<Collider>());
+        body.transform.SetParent(go.transform, false);
+        body.transform.localScale = new Vector3(9f, 0.12f, 9f);
+        body.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+        body.GetComponent<Renderer>().sharedMaterial = water;
+
+        var box = go.AddComponent<BoxCollider>();
+        box.center = new Vector3(0f, 0.1f, 0f);
+        box.size = new Vector3(9f, 0.4f, 9f);
+
+        var src = go.AddComponent<WaterSource>();
+        src.displayName = "Water";
+        src.refillAmount = 40f;
     }
 }

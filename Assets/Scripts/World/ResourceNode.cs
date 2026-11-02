@@ -9,6 +9,10 @@ public class ResourceNode : MonoBehaviour
     public int hitsToHarvest = 3;
     public int amountPerHit = 1;
 
+    [Header("Optional second drop")]
+    public string extraItemId = "";
+    public int extraAmount = 1;
+
     int remaining;
     Vector3 baseScale;
     bool shaking;
@@ -22,7 +26,11 @@ public class ResourceNode : MonoBehaviour
     public bool Harvest()
     {
         remaining--;
-        if (Inventory.Instance != null) Inventory.Instance.Add(itemId, amountPerHit);
+        if (Inventory.Instance != null)
+        {
+            Inventory.Instance.Add(itemId, amountPerHit);
+            if (!string.IsNullOrEmpty(extraItemId)) Inventory.Instance.Add(extraItemId, extraAmount);
+        }
 
         if (!shaking) StartCoroutine(Shake());
         transform.localScale = baseScale * (0.94f + 0.06f * Mathf.Clamp01(remaining / (float)hitsToHarvest));

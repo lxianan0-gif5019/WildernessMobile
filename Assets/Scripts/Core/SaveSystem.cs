@@ -8,6 +8,7 @@ public class SaveData
 {
     public float px, py, pz, ry;
     public float timeOfDay;
+    public float health, hunger, thirst;
     public List<ItemEntry> items = new List<ItemEntry>();
     public List<WallEntry> walls = new List<WallEntry>();
 }
@@ -63,6 +64,13 @@ public class SaveSystem : MonoBehaviour
 
         if (DayNightCycle.Instance != null) data.timeOfDay = DayNightCycle.Instance.timeOfDay;
 
+        if (PlayerStats.Instance != null)
+        {
+            data.health = PlayerStats.Instance.health;
+            data.hunger = PlayerStats.Instance.hunger;
+            data.thirst = PlayerStats.Instance.thirst;
+        }
+
         if (Inventory.Instance != null)
             foreach (var s in Inventory.Instance.items)
                 data.items.Add(new ItemEntry { id = s.id, count = s.count });
@@ -114,6 +122,13 @@ public class SaveSystem : MonoBehaviour
         {
             DayNightCycle.Instance.timeOfDay = data.timeOfDay;
             DayNightCycle.Instance.Apply(data.timeOfDay);
+        }
+
+        if (PlayerStats.Instance != null && data.health > 0f)
+        {
+            PlayerStats.Instance.health = data.health;
+            PlayerStats.Instance.hunger = data.hunger > 0f ? data.hunger : PlayerStats.Instance.maxHunger;
+            PlayerStats.Instance.thirst = data.thirst > 0f ? data.thirst : PlayerStats.Instance.maxThirst;
         }
 
         if (Inventory.Instance != null)

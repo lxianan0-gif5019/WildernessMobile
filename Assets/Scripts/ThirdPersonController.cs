@@ -58,7 +58,8 @@ public class ThirdPersonController : MonoBehaviour
 
         if (moveDir.sqrMagnitude > 0.0001f)
         {
-            float speed = moveSpeed * (InputHub.SprintHeld ? sprintMultiplier : 1f);
+            bool canSprint = InputHub.SprintHeld && (PlayerStats.Instance == null || PlayerStats.Instance.CanSprint());
+            float speed = moveSpeed * (canSprint ? sprintMultiplier : 1f);
             cc.Move(moveDir.normalized * speed * Time.deltaTime);
 
             Quaternion look = Quaternion.LookRotation(moveDir.normalized, Vector3.up);

@@ -18,6 +18,7 @@ public class PlayerInteractor : MonoBehaviour
     public Camera cam;
     public ResourceNode Current { get; private set; }
     public PlacedStructure CurrentStructure { get; private set; }
+    public WaterSource CurrentWater { get; private set; }
 
     ResourceNode[] cached;
     float nextScan;
@@ -32,6 +33,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         Current = FindResource();
         CurrentStructure = FindStructure();
+        CurrentWater = FindWater();
 
         if (!InputHub.InteractDown) return;
 
@@ -40,7 +42,31 @@ public class PlayerInteractor : MonoBehaviour
         // In build mode the build system owns the interact key.
         if (BuildSystem.Instance != null && BuildSystem.Instance.Active) return;
 
+        if (CurrentWater != null) { CurrentWater.Drink(); return; }
+
         if (CurrentStructure != null) CurrentStructure.PickUp();
+    }
+
+    WaterSource FindWater()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        WaterSource found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var w = h.collider.GetComponentInParent<WaterSource>();
+            if (w == null) continue;
+            if (Vector3.Distance(w.transform.position, transform.position) > pickupReach) continue;
+
+            if (h.distance < best) { best = h.distance; found = w; }
+        }
+        return found;
     }
 
     ResourceNode FindResource()
@@ -120,6 +146,7 @@ public class PlayerInteractor : MonoBehaviour
     public string Prompt()
     {
         if (Current != null) return "Harvest " + Current.displayName;
+        if (CurrentWater != null) return "Drink " + CurrentWater.displayName;
         if (CurrentStructure != null) return "Pick up " + CurrentStructure.displayName;
         return "";
     }

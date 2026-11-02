@@ -19,9 +19,13 @@ public class GameUI : MonoBehaviour
     GameObject invPanel, craftPanel;
     bool invOpen, craftOpen;
 
-    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall" };
-    readonly Text[] invLabels = new Text[5];
-    readonly GameObject[] invRows = new GameObject[5];
+    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall", "berry" };
+    readonly Text[] invLabels = new Text[6];
+    readonly GameObject[] invRows = new GameObject[6];
+
+    // survival bars: health, hunger, thirst, stamina
+    readonly Image[] statFills = new Image[4];
+    readonly Text[] statLabels = new Text[4];
 
     void Awake()
     {
@@ -65,6 +69,8 @@ public class GameUI : MonoBehaviour
             }
         }
 
+        UpdateStatBars();
+
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
     }
@@ -87,6 +93,12 @@ public class GameUI : MonoBehaviour
         // HUD line
         hud = MakeText(root, "HUD", "", 26, TextAnchor.UpperLeft);
         Anchor(hud.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(920f, 40f), new Vector2(0f, 1f));
+
+        // --- survival bars, stacked under the HUD line
+        MakeStatBar(root, 0, "HP", new Color(0.85f, 0.22f, 0.22f), -64f);
+        MakeStatBar(root, 1, "FOOD", new Color(0.90f, 0.60f, 0.15f), -104f);
+        MakeStatBar(root, 2, "WATER", new Color(0.22f, 0.55f, 0.90f), -144f);
+        MakeStatBar(root, 3, "STAMINA", new Color(0.35f, 0.80f, 0.35f), -184f);
 
         // Harvest / build prompt
         prompt = MakeText(root, "Prompt", "", 30, TextAnchor.MiddleCenter);
@@ -130,8 +142,49 @@ public class GameUI : MonoBehaviour
         MakeCraftRows(craftPanel.transform);
     }
 
-    void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)
+    void MakeStatBar(Transform parent, int index, string label, Color color, float y)
     {
+        var bg = MakeImage(parent, "StatBar" + label, new Color(0f, 0f, 0f, 0.45f), null);
+        Anchor(bg.rectTransform, new Vector2(0f, 1f), new Vector2(24f, y), new Vector2(320f, 28f), new Vector2(0f, 1f));
+
+        var fill = MakeImage(bg.rectTransform, "Fill", color, null);
+        var rt = fill.rectTransform;
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0f, 0.5f);
+        rt.offsetMin = new Vector2(2f, 2f);
+        rt.offsetMax = new Vector2(-2f, -2f);
+
+        var t = MakeText(bg.rectTransform, "Label", label, 18, TextAnchor.MiddleLeft);
+        Anchor(t.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(300f, 26f), new Vector2(0f, 0.5f));
+
+        statFills[index] = fill;
+        statLabels[index] = t;
+    }
+
+    void UpdateStatBars()
+    {
+        var s = PlayerStats.Instance;
+        if (s == null) return;
+
+        SetBar(0, s.health, s.maxHealth, "HP");
+        SetBar(1, s.hunger, s.maxHunger, "FOOD");
+        SetBar(2, s.thirst, s.maxThirst, "WATER");
+        SetBar(3, s.stamina, s.maxStamina, "STAMINA");
+    }
+
+    void SetBar(int i, float value, float max, string label)
+    {
+        if (statFills[i] == null) return;
+        float v = max <= 0f ? 0f : Mathf.Clamp(value / max, 0.001f, 1f);
+        var rt = statFills[i].rectTransform;
+        rt.anchorMax = new Vector2(v, 1f);
+        rt.offsetMin = new Vector2(2f, 2f);
+        rt.offsetMax = new Vector2(-2f, -2f);
+        if (statLabels[i] != null) statLabels[i].text = label + "   " + Mathf.RoundToInt(value);
+    }
+
+    void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)    {
         var img = MakeImage(parent, name, new Color(1f, 1f, 1f, 0.18f), circle);
         var rt = img.rectTransform;
         rt.anchorMin = anchor;
@@ -200,6 +253,16 @@ public class GameUI : MonoBehaviour
 
     public void OnItemClicked(string id)
     {
+        if (id == "berry")
+        {
+            if (Inventory.Instance != null && Inventory.Instance.Spend("berry", 1) && PlayerStats.Instance != null)
+            {
+                PlayerStats.Instance.Eat(12f, 6f);
+                Debug.Log("[UI] ate a berry");
+            }
+            return;
+        }
+
         if (id == "wall")
         {
             if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode();

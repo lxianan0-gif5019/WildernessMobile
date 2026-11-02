@@ -18,6 +18,7 @@ public static class ItemDatabase
         Add("wood", "Wood", new Color(0.55f, 0.36f, 0.18f));
         Add("stone", "Stone", new Color(0.58f, 0.58f, 0.60f));
         Add("fiber", "Fiber", new Color(0.45f, 0.66f, 0.30f));
+        Add("berry", "Berry", new Color(0.78f, 0.20f, 0.35f));
         Add("plank", "Plank", new Color(0.74f, 0.56f, 0.30f));
         Add("wall", "Wall", new Color(0.63f, 0.46f, 0.26f));
     }
