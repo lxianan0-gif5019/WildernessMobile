@@ -69,9 +69,16 @@ public class TouchRouter : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ touch
+    [Header("Stick zone (fraction of screen)")]
+    [Tooltip("Any touch starting inside this bottom-left region is treated as the joystick, never as camera look.")]
+    public float stickZoneWidth = 0.45f;
+    public float stickZoneHeight = 0.60f;
+
     void Begin(int id, Vector2 pos)
     {
-        if (Contains(stickArea, pos))
+        // Bottom-left of the screen belongs to the joystick, no matter where exactly
+        // the thumb lands. This is what stops the stick from also turning the camera.
+        if ((stickFinger < 0 || stickFinger == id) && (InStickZone(pos) || Contains(stickArea, pos)))
         {
             stickFinger = id;
             ApplyStick(pos);
@@ -90,6 +97,12 @@ public class TouchRouter : MonoBehaviour
             lookFinger = id;
             lastLookPos = pos;
         }
+    }
+
+    bool InStickZone(Vector2 screenPos)
+    {
+        return screenPos.x <= Screen.width * stickZoneWidth
+            && screenPos.y <= Screen.height * stickZoneHeight;
     }
 
     void Move(int id, Vector2 pos)

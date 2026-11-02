@@ -198,7 +198,18 @@ public class GameUI : MonoBehaviour
         rt.offsetMin = new Vector2(2f, 2f);
         rt.offsetMax = new Vector2(-2f, -2f);
         if (statLabels[i] != null) statLabels[i].text = label + "   " + Mathf.RoundToInt(value);
+
+        if (i == 0 && !loggedBars)
+        {
+            loggedBars = true;
+            Debug.Log("[UI] bars active, hp=" + Mathf.RoundToInt(value)
+                      + " barScreen=" + RectTransformUtility.WorldToScreenPoint(null, rt.position)
+                      + " barSize=" + rt.rect.size
+                      + " fillColor=" + statFills[i].color);
+        }
     }
+
+    bool loggedBars;
 
     void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)    {
         var img = MakeImage(parent, name, new Color(1f, 1f, 1f, 0.18f), circle);
