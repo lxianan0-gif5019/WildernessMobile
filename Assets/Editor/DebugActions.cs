@@ -38,6 +38,47 @@ public static class DebugActions
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
     }
 
+    [MenuItem("Wilderness/31. Debug Wolf Status")]
+    public static void WolfStatus()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[WolfDbg] no player"); return; }
+
+        var wolves = Object.FindObjectsOfType<Wolf>();
+        float nearest = float.MaxValue;
+        foreach (var w in wolves)
+        {
+            float d = Vector3.Distance(w.transform.position, player.transform.position);
+            if (d < nearest) nearest = d;
+        }
+
+        var fire = Campfire.Nearest(player.transform.position);
+        float fireDist = fire != null ? Vector3.Distance(fire.transform.position, player.transform.position) : -1f;
+
+        Debug.Log("[WolfDbg] alive=" + wolves.Length
+                  + " nearest=" + (wolves.Length > 0 ? nearest.ToString("F1") : "none")
+                  + " fireDist=" + fireDist.ToString("F1")
+                  + " hp=" + (PlayerStats.Instance != null ? PlayerStats.Instance.health.ToString("F0") : "?"));
+    }
+
+    [MenuItem("Wilderness/29. Debug Set Night")]
+    public static void SetNight()
+    {
+        if (DayNightCycle.Instance == null) { Debug.Log("[Debug] no DayNightCycle"); return; }
+        DayNightCycle.Instance.timeOfDay = 0.02f;
+        DayNightCycle.Instance.Apply(0.02f);
+        Debug.Log("[Debug] time=midnight isNight=" + DayNightCycle.Instance.IsNight);
+    }
+
+    [MenuItem("Wilderness/30. Debug Set Day")]
+    public static void SetDay()
+    {
+        if (DayNightCycle.Instance == null) { Debug.Log("[Debug] no DayNightCycle"); return; }
+        DayNightCycle.Instance.timeOfDay = 0.45f;
+        DayNightCycle.Instance.Apply(0.45f);
+        Debug.Log("[Debug] time=midday isNight=" + DayNightCycle.Instance.IsNight);
+    }
+
     [MenuItem("Wilderness/28. Debug Enable Run In Background")]
     public static void EnableRunInBackground()
     {

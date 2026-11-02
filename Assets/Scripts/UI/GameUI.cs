@@ -26,6 +26,11 @@ public class GameUI : MonoBehaviour
 
     Text[] craftRowLabels;
 
+    Image damageFlash;
+    Text warning;
+    float flashAlpha;
+    float lastHealth = -1f;
+
     // survival bars: health, hunger, thirst, stamina
     readonly Image[] statFills = new Image[4];
     readonly Text[] statLabels = new Text[4];
@@ -41,6 +46,7 @@ public class GameUI : MonoBehaviour
         if (router == null) router = gameObject.AddComponent<TouchRouter>();
 
         if (GetComponent<CraftingController>() == null) gameObject.AddComponent<CraftingController>();
+        if (GetComponent<WolfNight>() == null) gameObject.AddComponent<WolfNight>();
 
         Build();
         RefreshCursor();
@@ -80,6 +86,7 @@ public class GameUI : MonoBehaviour
         }
 
         UpdateStatBars();
+        UpdateDamageFeedback();
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
@@ -111,9 +118,22 @@ public class GameUI : MonoBehaviour
 
         var root = canvasGo.transform;
 
+        // red hit flash: first child so the rest of the HUD draws on top of it
+        damageFlash = MakeImage(root, "DamageFlash", new Color(0.7f, 0.05f, 0.05f, 0f), null);
+        var frt = damageFlash.rectTransform;
+        frt.anchorMin = Vector2.zero;
+        frt.anchorMax = Vector2.one;
+        frt.offsetMin = Vector2.zero;
+        frt.offsetMax = Vector2.zero;
+
         // HUD line
         hud = MakeText(root, "HUD", "", 26, TextAnchor.UpperLeft);
         Anchor(hud.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(920f, 40f), new Vector2(0f, 1f));
+
+        // wolf warning
+        warning = MakeText(root, "Warning", "", 32, TextAnchor.MiddleCenter);
+        Anchor(warning.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(600f, 44f), new Vector2(0.5f, 1f));
+        warning.color = new Color(1f, 0.35f, 0.30f);
 
         // --- survival bars, stacked under the HUD line
         MakeStatBar(root, 0, "HP", new Color(0.85f, 0.22f, 0.22f), -64f);
@@ -186,6 +206,30 @@ public class GameUI : MonoBehaviour
 
         statFills[index] = fill;
         statLabels[index] = t;
+    }
+
+    void UpdateDamageFeedback()
+    {
+        var st = PlayerStats.Instance;
+        if (st != null)
+        {
+            if (lastHealth < 0f) lastHealth = st.health;
+            if (st.health < lastHealth - 0.01f) flashAlpha = Mathf.Min(0.5f, flashAlpha + 0.4f);
+            lastHealth = st.health;
+        }
+
+        if (flashAlpha > 0f)
+        {
+            flashAlpha = Mathf.Max(0f, flashAlpha - Time.deltaTime * 1.6f);
+            if (damageFlash != null) damageFlash.color = new Color(0.7f, 0.05f, 0.05f, flashAlpha);
+        }
+
+        if (warning != null)
+        {
+            var w = WolfNight.Instance;
+            if (w != null && w.AliveCount > 0) warning.text = "WOLVES   x" + w.AliveCount;
+            else warning.text = "";
+        }
     }
 
     void UpdateStatBars()

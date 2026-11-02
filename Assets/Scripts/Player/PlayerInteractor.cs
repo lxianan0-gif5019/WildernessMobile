@@ -21,6 +21,7 @@ public class PlayerInteractor : MonoBehaviour
     public WaterSource CurrentWater { get; private set; }
     public Animal CurrentAnimal { get; private set; }
     public Campfire CurrentCampfire { get; private set; }
+    public Wolf CurrentWolf { get; private set; }
 
     [Tooltip("Damage dealt to an animal per interact press.")]
     public float attackDamage = 22f;
@@ -41,8 +42,12 @@ public class PlayerInteractor : MonoBehaviour
         CurrentWater = FindWater();
         CurrentAnimal = FindAnimal();
         CurrentCampfire = FindCampfire();
+        CurrentWolf = FindWolf();
 
         if (!InputHub.InteractDown) return;
+
+        // A wolf in your face takes priority over everything else.
+        if (CurrentWolf != null) { CurrentWolf.TakeDamage(attackDamage); return; }
 
         // Hunting comes first: if you are aiming at an animal, that is the intent.
         if (CurrentAnimal != null) { CurrentAnimal.TakeDamage(attackDamage); return; }
@@ -68,6 +73,28 @@ public class PlayerInteractor : MonoBehaviour
         if (CurrentWater != null) { CurrentWater.Drink(); return; }
 
         if (CurrentStructure != null) CurrentStructure.PickUp();
+    }
+
+    Wolf FindWolf()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        Wolf found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var w = h.collider.GetComponentInParent<Wolf>();
+            if (w == null || w.Dead) continue;
+            if (Vector3.Distance(w.transform.position, transform.position) > reach + 1.5f) continue;
+
+            if (h.distance < best) { best = h.distance; found = w; }
+        }
+        return found;
     }
 
     Campfire FindCampfire()
@@ -222,6 +249,7 @@ public class PlayerInteractor : MonoBehaviour
 
     public string Prompt()
     {
+        if (CurrentWolf != null) return "Fight Wolf";
         if (CurrentAnimal != null) return "Hit " + CurrentAnimal.displayName;
         if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return "Cook meat";
         if (Current != null) return "Harvest " + Current.displayName;
