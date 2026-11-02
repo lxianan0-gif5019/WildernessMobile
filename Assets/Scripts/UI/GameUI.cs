@@ -78,10 +78,21 @@ public class GameUI : MonoBehaviour
     // ------------------------------------------------------------------ build UI
     void Build()
     {
+        // The canvas must be a ROOT object: parented canvases are not stretched to
+        // the screen by Unity, which pushes all UI off-screen.
         var canvasGo = new GameObject("HUD");
-        canvasGo.transform.SetParent(transform, false);
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+        // Unity does not reliably position a runtime-created root canvas: its size
+        // gets set but it can stay pinned at (0,0), pushing the whole UI off-screen.
+        // Place it explicitly in the middle of the screen.
+        var crt = canvasGo.GetComponent<RectTransform>();
+        crt.anchorMin = Vector2.zero;
+        crt.anchorMax = Vector2.zero;
+        crt.pivot = new Vector2(0.5f, 0.5f);
+        crt.sizeDelta = new Vector2(Screen.width, Screen.height);
+        crt.localPosition = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
         var scaler = canvasGo.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -140,6 +151,11 @@ public class GameUI : MonoBehaviour
         craftPanel = MakePanel(root, "CraftPanel", "CRAFTING", out craftText);
         craftPanel.SetActive(false);
         MakeCraftRows(craftPanel.transform);
+
+        Debug.Log("[UI] screen=" + Screen.width + "x" + Screen.height
+                  + " canvasPos=" + crt.position
+                  + " stickScreen=" + RectTransformUtility.WorldToScreenPoint(null, router.stickArea.position)
+                  + " children=" + root.childCount);
     }
 
     void MakeStatBar(Transform parent, int index, string label, Color color, float y)
