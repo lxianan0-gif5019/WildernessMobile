@@ -5,6 +5,8 @@ using UnityEngine;
 // Owns all touch input for the game UI: joystick, look drag and buttons.
 // Reads Input.touches directly instead of going through EventSystem, because
 // EventSystem's touch handling is unreliable on device (multi-touch especially).
+// Runs before gameplay and before GameUI so the flags it sets are consumed this frame.
+[DefaultExecutionOrder(-50)]
 public class TouchRouter : MonoBehaviour
 {
     public static TouchRouter Instance;
@@ -16,7 +18,7 @@ public class TouchRouter : MonoBehaviour
     [Range(0.05f, 0.95f)] public float stickDeadZone = 0.15f;
 
     [Header("Look")]
-    public float lookSensitivity = 0.16f;
+    public float lookSensitivity = 0.085f;
 
     class Btn
     {

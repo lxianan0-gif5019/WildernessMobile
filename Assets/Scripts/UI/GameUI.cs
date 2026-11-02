@@ -93,23 +93,28 @@ public class GameUI : MonoBehaviour
         Anchor(prompt.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 250f), new Vector2(900f, 44f), new Vector2(0.5f, 0f));
 
         // --- joystick (pivot CENTRE: local coords are then centred on the stick)
-        var stickBg = MakeImage(root, "JoystickArea", new Color(1f, 1f, 1f, 0.12f), circle);
-        Anchor(stickBg.rectTransform, new Vector2(0f, 0f), new Vector2(350f, 350f), new Vector2(240f, 240f), new Vector2(0.5f, 0.5f));
+        // --- joystick: a generous invisible touch pad with the visible stick inside it.
+        // The pad is larger than the circle so a thumb landing slightly off still grabs
+        // the stick instead of turning the camera.
+        var stickPad = MakeImage(root, "JoystickPad", new Color(0f, 0f, 0f, 0f), null);
+        Anchor(stickPad.rectTransform, new Vector2(0f, 0f), new Vector2(360f, 360f), new Vector2(400f, 400f), new Vector2(0.5f, 0.5f));
 
-        var knob = MakeImage(stickBg.rectTransform, "Knob", new Color(1f, 1f, 1f, 0.55f), circle);
+        var stickBg = MakeImage(stickPad.rectTransform, "JoystickArea", new Color(1f, 1f, 1f, 0.12f), circle);
+        Anchor(stickBg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240f, 240f), new Vector2(0.5f, 0.5f));
+
+        var knob = MakeImage(stickPad.rectTransform, "Knob", new Color(1f, 1f, 1f, 0.55f), circle);
         Anchor(knob.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(100f, 100f), new Vector2(0.5f, 0.5f));
 
-        router.stickArea = stickBg.rectTransform;
+        router.stickArea = stickPad.rectTransform;
         router.stickKnob = knob.rectTransform;
-        router.stickRadius = 90f;
+        router.stickRadius = 95f;
 
-        // --- action buttons
-        MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0f), new Vector2(-100f, 150f), 150f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
-        MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0f), new Vector2(-100f, 340f), 150f, () => InputHub.InteractDown = true);
-        MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 0f), new Vector2(-100f, 530f), 150f, () => InputHub.BuildDown = true);
-
-        MakeButton(root, "BagBtn", "Bag", new Vector2(1f, 1f), new Vector2(-100f, -100f), 140f, () => InputHub.InventoryDown = true);
-        MakeButton(root, "CraftBtn", "Craft", new Vector2(1f, 1f), new Vector2(-100f, -260f), 140f, () => InputHub.CraftDown = true);
+        // --- action buttons anchored by screen RATIO so a wide phone cannot overlap them
+        MakeButton(root, "BagBtn", "Bag", new Vector2(1f, 0.88f), 140f, () => InputHub.InventoryDown = true);
+        MakeButton(root, "CraftBtn", "Craft", new Vector2(1f, 0.72f), 140f, () => InputHub.CraftDown = true);
+        MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 0.56f), 140f, () => InputHub.BuildDown = true);
+        MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0.30f), 150f, () => InputHub.InteractDown = true);
+        MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0.14f), 150f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
 
         // --- inventory panel
         invPanel = MakePanel(root, "InventoryPanel", "INVENTORY", out invText);
@@ -125,10 +130,15 @@ public class GameUI : MonoBehaviour
         MakeCraftRows(craftPanel.transform);
     }
 
-    void MakeButton(Transform parent, string name, string label, Vector2 anchor, Vector2 offset, float size, Action action)
+    void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)
     {
         var img = MakeImage(parent, name, new Color(1f, 1f, 1f, 0.18f), circle);
-        Anchor(img.rectTransform, anchor, offset, new Vector2(size, size), anchor);
+        var rt = img.rectTransform;
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(size, size);
+        rt.anchoredPosition = new Vector2(-100f, 0f);
 
         var t = MakeText(img.rectTransform, "Label", label, 27, TextAnchor.MiddleCenter);
         Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size), new Vector2(0.5f, 0.5f));
