@@ -24,6 +24,7 @@ public class TouchRouter : MonoBehaviour
     {
         public RectTransform rect;
         public Action action;
+        public int layer;      // 0 = gameplay HUD, 1 = menus
     }
 
     readonly List<Btn> buttons = new List<Btn>();
@@ -39,10 +40,10 @@ public class TouchRouter : MonoBehaviour
         Instance = this;
     }
 
-    public void RegisterButton(RectTransform rect, Action action)
+    public void RegisterButton(RectTransform rect, Action action, int layer = 0)
     {
         if (rect == null || action == null) return;
-        buttons.Add(new Btn { rect = rect, action = action });
+        buttons.Add(new Btn { rect = rect, action = action, layer = layer });
     }
 
     void Update()
@@ -76,6 +77,18 @@ public class TouchRouter : MonoBehaviour
 
     void Begin(int id, Vector2 pos)
     {
+        // While a menu is open only menu buttons respond; the world is frozen.
+        if (InputHub.MenuOpen)
+        {
+            var menuHit = HitButton(pos);
+            if (menuHit != null)
+            {
+                menuHit.action();
+                if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.UiClick, 0.7f);
+            }
+            return;
+        }
+
         // Bottom-left of the screen belongs to the joystick, no matter where exactly
         // the thumb lands. This is what stops the stick from also turning the camera.
         if ((stickFinger < 0 || stickFinger == id) && (InStickZone(pos) || Contains(stickArea, pos)))
@@ -108,6 +121,7 @@ public class TouchRouter : MonoBehaviour
 
     void Move(int id, Vector2 pos)
     {
+        if (InputHub.MenuOpen) return;
         if (id == stickFinger) { ApplyStick(pos); return; }
 
         if (id == lookFinger)
@@ -186,10 +200,12 @@ public class TouchRouter : MonoBehaviour
     // ---------------------------------------------------------------- helpers
     Btn HitButton(Vector2 screenPos)
     {
+        int wantLayer = InputHub.MenuOpen ? 1 : 0;
         for (int i = buttons.Count - 1; i >= 0; i--)
         {
             var b = buttons[i];
             if (b.rect == null) continue;
+            if (b.layer != wantLayer) continue;
             if (!b.rect.gameObject.activeInHierarchy) continue;
             if (Contains(b.rect, screenPos)) return b;
         }

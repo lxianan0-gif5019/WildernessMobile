@@ -15,6 +15,9 @@ public static class InputHub
     public static bool BuildDown;
     public static bool TouchMoveActive;
 
+    /// <summary>True while a menu is open: the world ignores all gameplay input.</summary>
+    public static bool MenuOpen;
+
     public static void ClearOneShots()
     {
         JumpDown = false;

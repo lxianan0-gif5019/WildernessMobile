@@ -49,6 +49,7 @@ public class GameUI : MonoBehaviour
         if (GetComponent<WolfNight>() == null) gameObject.AddComponent<WolfNight>();
         if (GetComponent<AudioManager>() == null) gameObject.AddComponent<AudioManager>();
         if (GetComponent<Diagnostics>() == null) gameObject.AddComponent<Diagnostics>();
+        if (GetComponent<MenuUI>() == null) gameObject.AddComponent<MenuUI>();
 
         Build();
         RefreshCursor();
@@ -170,6 +171,7 @@ public class GameUI : MonoBehaviour
         MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 0.56f), 140f, () => InputHub.BuildDown = true);
         MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0.30f), 150f, () => InputHub.InteractDown = true);
         MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0.14f), 150f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
+        MakeButton(root, "PauseBtn", "II", new Vector2(1f, 0.98f), 110f, () => { if (MenuUI.Instance != null) MenuUI.Instance.OpenPause(); });
 
         // --- inventory panel
         invPanel = MakePanel(root, "InventoryPanel", "INVENTORY", out invText);

@@ -58,7 +58,7 @@ public class ThirdPersonCamera : MonoBehaviour
         if (target == null) return;
 
         // While a menu panel is open the cursor is free, so it must not turn the camera.
-        if (!GameUI.PanelOpen)
+        if (!GameUI.PanelOpen && !InputHub.MenuOpen)
         {
             yaw += InputHub.LookDelta.x * mouseSensitivity;
             pitch -= InputHub.LookDelta.y * mouseSensitivity;

@@ -9,6 +9,15 @@ public class PlayerInputReader : MonoBehaviour
     {
         InputHub.ClearOneShots();
 
+        // Menus own the input while open; gameplay gets nothing.
+        if (InputHub.MenuOpen)
+        {
+            InputHub.Move = Vector2.zero;
+            InputHub.SprintHeld = false;
+            InputHub.JumpHeld = false;
+            return;
+        }
+
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
         Vector2 keyboard = new Vector2(h, v);

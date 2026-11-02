@@ -38,6 +38,25 @@ public static class DebugActions
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
     }
 
+    [MenuItem("Wilderness/36. Debug Menu State")]
+    public static void MenuState()
+    {
+        var m = Object.FindObjectOfType<MenuUI>();
+        Debug.Log("[MenuDbg] menu=" + (m != null && m.IsOpen)
+                  + " menuOpenFlag=" + InputHub.MenuOpen
+                  + " timeScale=" + UnityEngine.Time.timeScale
+                  + " time=" + UnityEngine.Time.time.ToString("F1"));
+    }
+
+    [MenuItem("Wilderness/37. Debug Close Menu")]
+    public static void CloseMenu()
+    {
+        var m = Object.FindObjectOfType<MenuUI>();
+        if (m == null) { Debug.Log("[MenuDbg] no MenuUI"); return; }
+        m.Close();
+        Debug.Log("[MenuDbg] closed by hand, timeScale=" + UnityEngine.Time.timeScale);
+    }
+
     [MenuItem("Wilderness/34. Debug Walk To Nearest Drop")]
     public static void WalkToDrop()
     {
