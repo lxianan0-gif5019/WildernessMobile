@@ -20,6 +20,8 @@ public class BuildSystem : MonoBehaviour
     Material fireMat;
     Material benchMat;
     Material furnaceMat;
+    Material hayMat;
+    Material bedMat;
     float nextHint;
 
     void Awake()
@@ -52,6 +54,12 @@ public class BuildSystem : MonoBehaviour
 
         furnaceMat = new Material(shader);
         furnaceMat.color = new Color(0.48f, 0.46f, 0.44f, 1f);
+
+        hayMat = new Material(shader);
+        hayMat.color = new Color(0.80f, 0.70f, 0.34f, 1f);
+
+        bedMat = new Material(shader);
+        bedMat.color = new Color(0.55f, 0.38f, 0.22f, 1f);
     }
 
     public void EnterBuildMode(string type)
@@ -92,6 +100,11 @@ public class BuildSystem : MonoBehaviour
                     ghost.transform.localScale = new Vector3(2.0f, 1.2f, 1.2f);
                     ghost.transform.position = point + Vector3.up * 0.6f;
                 }
+                else if (buildType == "bed" || buildType == "hay_bed")
+                {
+                    ghost.transform.localScale = new Vector3(2.2f, 0.3f, 1.2f);
+                    ghost.transform.position = point + Vector3.up * 0.15f;
+                }
                 else
                 {
                     ghost.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
@@ -104,7 +117,8 @@ public class BuildSystem : MonoBehaviour
         bool aimingAtThing = PlayerInteractor.Instance != null &&
                              (PlayerInteractor.Instance.Current != null ||
                               PlayerInteractor.Instance.CurrentAnimal != null ||
-                              PlayerInteractor.Instance.CurrentWater != null);
+                              PlayerInteractor.Instance.CurrentWater != null ||
+                              PlayerInteractor.Instance.CurrentSleep != null);
 
         if (InputHub.InteractDown && !aimingAtThing) Place(point, yaw);
     }
@@ -144,9 +158,48 @@ public class BuildSystem : MonoBehaviour
 
         if (buildType == "campfire") CreateCampfire(point);
         else if (buildType == "workbench" || buildType == "furnace") CreateStation(buildType, point);
+        else if (buildType == "bed" || buildType == "hay_bed") CreateBed(buildType, point);
         else CreateWall(point + Vector3.up * 1.25f, yaw);
 
         Debug.Log("[Build] placed " + buildType);
+    }
+
+    /// <summary>Hay nest or wooden bed: somewhere to sleep through the night.</summary>
+    public GameObject CreateBed(string kind, Vector3 groundPosition)
+    {
+        var root = new GameObject(kind == "bed" ? "Bed" : "HayNest");
+        root.transform.position = groundPosition;
+
+        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        body.name = "Body";
+        Object.Destroy(body.GetComponent<Collider>());
+        body.transform.SetParent(root.transform, false);
+        body.transform.localScale = new Vector3(2.2f, 0.28f, 1.2f);
+        body.transform.localPosition = new Vector3(0f, 0.14f, 0f);
+        body.GetComponent<Renderer>().sharedMaterial = kind == "bed" ? bedMat : hayMat;
+
+        if (kind == "bed")
+        {
+            var pillow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pillow.name = "Pillow";
+            Object.Destroy(pillow.GetComponent<Collider>());
+            pillow.transform.SetParent(root.transform, false);
+            pillow.transform.localScale = new Vector3(0.7f, 0.16f, 1f);
+            pillow.transform.localPosition = new Vector3(-0.7f, 0.36f, 0f);
+            pillow.GetComponent<Renderer>().sharedMaterial = bedMat;
+        }
+
+        var col = root.AddComponent<BoxCollider>();
+        col.center = new Vector3(0f, 0.15f, 0f);
+        col.size = new Vector3(2.2f, 0.3f, 1.2f);
+
+        var sleep = root.AddComponent<SleepSpot>();
+        sleep.kind = kind;
+
+        var structure = root.AddComponent<PlacedStructure>();
+        structure.itemId = kind;
+        structure.displayName = kind == "bed" ? "Bed" : "Hay Nest";
+        return root;
     }
 
     /// <summary>Workbench / furnace: a box that unlocks recipes while you stand near it.</summary>

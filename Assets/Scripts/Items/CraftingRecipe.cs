@@ -36,6 +36,9 @@ public static class RecipeCatalog
 
         Add("iron_axe", "Iron Axe", 1, new[] { "stick", "iron_ingot" }, new[] { 2, 2 }, 6f, "workbench");
         Add("iron_pick", "Iron Pick", 1, new[] { "stick", "iron_ingot" }, new[] { 2, 2 }, 6f, "workbench");
+
+        Add("hay_bed", "Hay Nest", 1, new[] { "fiber" }, new[] { 8 }, 5f, "");
+        Add("bed", "Wooden Bed", 1, new[] { "wood", "stick" }, new[] { 6, 4 }, 7f, "workbench");
     }
 
     static void Add(string id, string name, int count, string[] ins, int[] amounts, float seconds, string station)

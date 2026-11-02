@@ -38,6 +38,33 @@ public static class DebugActions
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
     }
 
+    [MenuItem("Wilderness/32. Debug Pickup Status")]
+    public static void PickupStatus()
+    {
+        var drops = Object.FindObjectsOfType<ItemPickup>();
+        var sb = new System.Text.StringBuilder("[Drops] count=" + drops.Length);
+        foreach (var d in drops) sb.Append(' ').Append(d.itemId).Append('x').Append(d.amount);
+        sb.Append(" | inv:");
+        if (Inventory.Instance != null)
+            foreach (var s in Inventory.Instance.items) sb.Append(' ').Append(s.id).Append('=').Append(s.count);
+        Debug.Log(sb.ToString());
+    }
+
+    [MenuItem("Wilderness/33. Debug Bed Test")]
+    public static void BedTest()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[Bed] no player"); return; }
+
+        var bed = BuildSystem.Instance.CreateBed("hay_bed", player.transform.position + player.transform.forward * 2.5f);
+        var sleep = bed.GetComponent<SleepSpot>();
+        string why;
+        bool ok = sleep.Sleep(out why);
+        Debug.Log("[Bed] placed, sleep=" + ok + " reason=" + why
+                  + " time=" + (DayNightCycle.Instance != null ? DayNightCycle.Instance.timeOfDay.ToString("F2") : "?")
+                  + " day=" + (DayNightCycle.Instance != null ? DayNightCycle.Instance.dayNumber.ToString() : "?"));
+    }
+
     [MenuItem("Wilderness/31. Debug Wolf Status")]
     public static void WolfStatus()
     {

@@ -362,7 +362,7 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace")
+        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace" || id == "bed" || id == "hay_bed")
         {
             if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode(id);
             invOpen = false; if (invPanel != null) invPanel.SetActive(false);

@@ -147,6 +147,7 @@ public class SaveSystem : MonoBehaviour
             {
                 if (w.type == "campfire") BuildSystem.Instance.CreateCampfire(new Vector3(w.x, w.y, w.z));
                 else if (w.type == "workbench" || w.type == "furnace") BuildSystem.Instance.CreateStation(w.type, new Vector3(w.x, w.y, w.z));
+                else if (w.type == "bed" || w.type == "hay_bed") BuildSystem.Instance.CreateBed(w.type, new Vector3(w.x, w.y, w.z));
                 else BuildSystem.Instance.CreateWall(new Vector3(w.x, w.y, w.z), w.ry);
             }
 

@@ -22,6 +22,7 @@ public class PlayerInteractor : MonoBehaviour
     public Animal CurrentAnimal { get; private set; }
     public Campfire CurrentCampfire { get; private set; }
     public Wolf CurrentWolf { get; private set; }
+    public SleepSpot CurrentSleep { get; private set; }
 
     [Tooltip("Damage dealt to an animal per interact press.")]
     public float attackDamage = 22f;
@@ -43,6 +44,7 @@ public class PlayerInteractor : MonoBehaviour
         CurrentAnimal = FindAnimal();
         CurrentCampfire = FindCampfire();
         CurrentWolf = FindWolf();
+        CurrentSleep = FindSleep();
 
         if (!InputHub.InteractDown) return;
 
@@ -54,6 +56,15 @@ public class PlayerInteractor : MonoBehaviour
 
         // Cooking at a fire beats picking it up.
         if (CurrentCampfire != null && CurrentCampfire.HasMeat()) { CurrentCampfire.Cook(); return; }
+
+        // Sleeping beats picking the bed up.
+        if (CurrentSleep != null)
+        {
+            string why;
+            if (CurrentSleep.Sleep(out why)) return;
+            Debug.Log("[Sleep] cannot sleep: " + why);
+            return;
+        }
 
         if (Current != null)
         {
@@ -73,6 +84,28 @@ public class PlayerInteractor : MonoBehaviour
         if (CurrentWater != null) { CurrentWater.Drink(); return; }
 
         if (CurrentStructure != null) CurrentStructure.PickUp();
+    }
+
+    SleepSpot FindSleep()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        SleepSpot found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var s = h.collider.GetComponentInParent<SleepSpot>();
+            if (s == null) continue;
+            if (Vector3.Distance(s.transform.position, transform.position) > pickupReach) continue;
+
+            if (h.distance < best) { best = h.distance; found = s; }
+        }
+        return found;
     }
 
     Wolf FindWolf()
@@ -250,6 +283,11 @@ public class PlayerInteractor : MonoBehaviour
     public string Prompt()
     {
         if (CurrentWolf != null) return "Fight Wolf";
+        if (CurrentSleep != null)
+        {
+            string why;
+            return CurrentSleep.CanSleep(out why) ? "Sleep" : "Sleep (" + why + ")";
+        }
         if (CurrentAnimal != null) return "Hit " + CurrentAnimal.displayName;
         if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return "Cook meat";
         if (Current != null) return "Harvest " + Current.displayName;

@@ -32,6 +32,8 @@ public static class ItemDatabase
         Add("iron_axe", "IronAxe", new Color(0.80f, 0.82f, 0.86f));
         Add("iron_pick", "IronPick", new Color(0.86f, 0.88f, 0.92f));
         Add("wolf_pelt", "WolfPelt", new Color(0.34f, 0.32f, 0.30f));
+        Add("hay_bed", "HayNest", new Color(0.80f, 0.70f, 0.34f));
+        Add("bed", "Bed", new Color(0.55f, 0.38f, 0.22f));
         Add("plank", "Plank", new Color(0.74f, 0.56f, 0.30f));
         Add("wall", "Wall", new Color(0.63f, 0.46f, 0.26f));
     }
@@ -48,4 +50,6 @@ public static class ItemDatabase
     }
 
     public static string Display(string id) { return Get(id).display; }
+
+    public static Color ItemColor(string id) { return Get(id).color; }
 }

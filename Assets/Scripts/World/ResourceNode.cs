@@ -30,21 +30,44 @@ public class ResourceNode : MonoBehaviour
     public bool Harvest(float power = 1f)
     {
         remaining -= Mathf.Max(1, Mathf.RoundToInt(power));
-        if (Inventory.Instance != null)
-        {
-            Inventory.Instance.Add(itemId, amountPerHit);
-            if (!string.IsNullOrEmpty(extraItemId)) Inventory.Instance.Add(extraItemId, extraAmount);
-        }
+
+        DropLoot();
 
         if (!shaking) StartCoroutine(Shake());
         transform.localScale = baseScale * (0.94f + 0.06f * Mathf.Clamp01(remaining / (float)hitsToHarvest));
 
         if (remaining <= 0)
         {
-            Destroy(gameObject);
+            StartCoroutine(FallAndDie());
             return true;
         }
         return false;
+    }
+
+    // Loot falls on the ground; the player has to walk over and collect it.
+    void DropLoot()
+    {
+        Vector3 centre = transform.position + Vector3.up * 0.5f;
+        var jitter = new Vector3(Random.Range(-0.7f, 0.7f), 0.2f, Random.Range(-0.7f, 0.7f));
+        if (amountPerHit > 0) ItemPickup.Spawn(itemId, amountPerHit, centre + jitter);
+
+        if (!string.IsNullOrEmpty(extraItemId) && extraAmount > 0)
+            ItemPickup.Spawn(extraItemId, extraAmount, centre - jitter);
+    }
+
+    // Trees topple over, then disappear.
+    IEnumerator FallAndDie()
+    {
+        Quaternion start = transform.rotation;
+        Quaternion end = start * Quaternion.Euler(0f, 0f, 82f);
+        float t = 0f;
+        while (t < 1.1f)
+        {
+            t += Time.deltaTime;
+            transform.rotation = Quaternion.Slerp(start, end, t / 1.1f);
+            yield return null;
+        }
+        Destroy(gameObject);
     }
 
     IEnumerator Shake()
