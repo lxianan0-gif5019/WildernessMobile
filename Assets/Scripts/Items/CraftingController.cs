@@ -95,6 +95,7 @@ public class CraftingController : MonoBehaviour
             Inventory.Instance.Spend(active.inputIds[i], active.inputCounts[i]);
 
         Inventory.Instance.Add(active.outputId, active.outputCount);
+        if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.CraftDone);
         Debug.Log("[Craft] finished " + active.displayName + " x" + active.outputCount);
         active = null;
     }

@@ -38,12 +38,56 @@ public static class DebugActions
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
     }
 
+    [MenuItem("Wilderness/34. Debug Walk To Nearest Drop")]
+    public static void WalkToDrop()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[Drop] no player"); return; }
+        if (ItemPickup.All.Count == 0) { Debug.Log("[Drop] nothing on the ground"); return; }
+
+        ItemPickup best = null;
+        float bestDist = float.MaxValue;
+        foreach (var p in ItemPickup.All)
+        {
+            float d = Vector3.Distance(p.transform.position, player.transform.position);
+            if (d < bestDist) { bestDist = d; best = p; }
+        }
+
+        Vector3 target = best.transform.position;
+        var cc = player.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        player.transform.position = target + new Vector3(1.2f, 0f, 0f);
+        if (cc != null) cc.enabled = true;
+
+        Debug.Log("[Drop] teleported to " + best.itemId + " (was " + bestDist.ToString("F1") + "m away)");
+    }
+
+    [MenuItem("Wilderness/35. Debug Try Interact")]
+    public static void TryInteract()
+    {
+        if (PlayerInteractor.Instance == null) { Debug.Log("[Drop] no interactor"); return; }
+
+        var p = PlayerInteractor.Instance;
+        Debug.Log("[Drop] targeted pickup = " + (p.CurrentPickup != null ? p.CurrentPickup.Label() : "none")
+                  + " | prompt = '" + p.Prompt() + "'");
+
+        p.TryInteract();
+
+        var sb = new System.Text.StringBuilder("[Drop] after interact, drops=");
+        sb.Append(ItemPickup.All.Count).Append(" inv:");
+        if (Inventory.Instance != null)
+            foreach (var s in Inventory.Instance.items) sb.Append(' ').Append(s.id).Append('=').Append(s.count);
+        Debug.Log(sb.ToString());
+    }
+
     [MenuItem("Wilderness/32. Debug Pickup Status")]
     public static void PickupStatus()
     {
         var drops = Object.FindObjectsOfType<ItemPickup>();
         var sb = new System.Text.StringBuilder("[Drops] count=" + drops.Length);
         foreach (var d in drops) sb.Append(' ').Append(d.itemId).Append('x').Append(d.amount);
+        sb.Append(" | nodes=").Append(Object.FindObjectsOfType<ResourceNode>().Length);
+        sb.Append(" harvestedIds=").Append(ResourceNode.Harvested.Count);
         sb.Append(" | inv:");
         if (Inventory.Instance != null)
             foreach (var s in Inventory.Instance.items) sb.Append(' ').Append(s.id).Append('=').Append(s.count);

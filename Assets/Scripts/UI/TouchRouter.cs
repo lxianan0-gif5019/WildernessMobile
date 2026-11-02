@@ -89,6 +89,7 @@ public class TouchRouter : MonoBehaviour
         if (hit != null)
         {
             hit.action();
+            if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.UiClick, 0.7f);
             return;
         }
 

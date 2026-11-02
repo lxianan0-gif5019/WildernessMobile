@@ -17,6 +17,7 @@ public class ThirdPersonController : MonoBehaviour
     CharacterController cc;
     Transform cam;
     Vector3 verticalVelocity;
+    float footstepTimer;
 
     void Awake()
     {
@@ -61,6 +62,14 @@ public class ThirdPersonController : MonoBehaviour
             bool canSprint = InputHub.SprintHeld && (PlayerStats.Instance == null || PlayerStats.Instance.CanSprint());
             float speed = moveSpeed * (canSprint ? sprintMultiplier : 1f);
             cc.Move(moveDir.normalized * speed * Time.deltaTime);
+
+            footstepTimer -= Time.deltaTime;
+            if (footstepTimer <= 0f)
+            {
+                footstepTimer = canSprint ? 0.34f : 0.55f;
+                if (cc.isGrounded && AudioManager.Instance != null)
+                    AudioManager.Instance.Play(AudioManager.Sfx.Footstep, canSprint ? 0.55f : 0.35f, 0.15f);
+            }
 
             Quaternion look = Quaternion.LookRotation(moveDir.normalized, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, look, turnSpeed * Time.deltaTime);

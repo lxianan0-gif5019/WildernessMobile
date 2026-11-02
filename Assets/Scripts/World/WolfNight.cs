@@ -107,6 +107,8 @@ public class WolfNight : MonoBehaviour
         var wolf = root.AddComponent<Wolf>();
         wolves.Add(wolf);
 
+        if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.WolfHowl, 1f, 0.03f);
+
         Debug.Log("[WolfNight] spawned a wolf at " + radius.ToString("F0") + "m");
     }
 

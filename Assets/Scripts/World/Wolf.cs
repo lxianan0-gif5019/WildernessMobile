@@ -93,6 +93,7 @@ public class Wolf : MonoBehaviour
                 {
                     nextBiteAt = Time.time + biteInterval;
                     if (PlayerStats.Instance != null) PlayerStats.Instance.Damage(biteDamage);
+                    if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.WolfBite);
                     Debug.Log("[Wolf] bit the player for " + biteDamage);
                 }
                 if (distance > biteRange + 1.5f) state = State.Charge;

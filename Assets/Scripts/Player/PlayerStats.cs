@@ -93,6 +93,7 @@ public class PlayerStats : MonoBehaviour
     {
         if (IsDead) return;
         health = Mathf.Max(0f, health - amount);
+        if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Hurt);
         if (health <= 0f) Die();
     }
 

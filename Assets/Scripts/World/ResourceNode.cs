@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Something the player can harvest with the interact key.
@@ -8,6 +9,13 @@ public class ResourceNode : MonoBehaviour
     public string displayName = "Tree";
     public int hitsToHarvest = 3;
     public int amountPerHit = 1;
+
+    [Header("Persistence")]
+    [Tooltip("Stable id so a harvested node stays harvested after loading a save.")]
+    public string persistentId = "";
+
+    /// <summary>Ids of nodes already harvested this session (written to the save file).</summary>
+    public static readonly HashSet<string> Harvested = new HashSet<string>();
 
     [Header("Optional second drop")]
     public string extraItemId = "";
@@ -25,6 +33,34 @@ public class ResourceNode : MonoBehaviour
     {
         remaining = hitsToHarvest;
         baseScale = transform.localScale;
+
+        if (string.IsNullOrEmpty(persistentId))
+            persistentId = Mathf.RoundToInt(transform.position.x * 10f)
+                         + "_" + Mathf.RoundToInt(transform.position.z * 10f)
+                         + "_" + itemId;
+    }
+
+    void Start()
+    {
+        // A save file may already say this node is gone.
+        if (Harvested.Contains(persistentId)) Destroy(gameObject);
+    }
+
+    void OnDestroy()
+    {
+        if (remaining <= 0) Harvested.Add(persistentId);
+    }
+
+    /// <summary>Called after loading: remove nodes the save says are gone, and remember them.</summary>
+    public static void ApplyHarvested(IEnumerable<string> ids)
+    {
+        Harvested.Clear();
+        if (ids != null) foreach (var id in ids) Harvested.Add(id);
+
+        var nodes = FindObjectsOfType<ResourceNode>();
+        for (int i = 0; i < nodes.Length; i++)
+            if (nodes[i] != null && Harvested.Contains(nodes[i].persistentId))
+                Destroy(nodes[i].gameObject);
     }
 
     public bool Harvest(float power = 1f)

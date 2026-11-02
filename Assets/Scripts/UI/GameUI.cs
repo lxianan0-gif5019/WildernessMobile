@@ -47,6 +47,8 @@ public class GameUI : MonoBehaviour
 
         if (GetComponent<CraftingController>() == null) gameObject.AddComponent<CraftingController>();
         if (GetComponent<WolfNight>() == null) gameObject.AddComponent<WolfNight>();
+        if (GetComponent<AudioManager>() == null) gameObject.AddComponent<AudioManager>();
+        if (GetComponent<Diagnostics>() == null) gameObject.AddComponent<Diagnostics>();
 
         Build();
         RefreshCursor();

@@ -23,6 +23,7 @@ public class PlayerInteractor : MonoBehaviour
     public Campfire CurrentCampfire { get; private set; }
     public Wolf CurrentWolf { get; private set; }
     public SleepSpot CurrentSleep { get; private set; }
+    public ItemPickup CurrentPickup { get; private set; }
 
     [Tooltip("Damage dealt to an animal per interact press.")]
     public float attackDamage = 22f;
@@ -45,9 +46,14 @@ public class PlayerInteractor : MonoBehaviour
         CurrentCampfire = FindCampfire();
         CurrentWolf = FindWolf();
         CurrentSleep = FindSleep();
+        CurrentPickup = FindPickup();
 
-        if (!InputHub.InteractDown) return;
+        if (InputHub.InteractDown) TryInteract();
+    }
 
+    /// <summary>Runs the interact action for whatever is currently targeted.</summary>
+    public void TryInteract()
+    {
         // A wolf in your face takes priority over everything else.
         if (CurrentWolf != null) { CurrentWolf.TakeDamage(attackDamage); return; }
 
@@ -66,6 +72,9 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
+        // Picking loot up beats chopping: you are clearly reaching for the drop.
+        if (CurrentPickup != null) { CurrentPickup.Collect(); return; }
+
         if (Current != null)
         {
             if (!string.IsNullOrEmpty(Current.requiredTool) &&
@@ -75,6 +84,7 @@ public class PlayerInteractor : MonoBehaviour
                 return;
             }
             Current.Harvest(HarvestPower());
+            if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Chop);
             return;
         }
 
@@ -84,6 +94,22 @@ public class PlayerInteractor : MonoBehaviour
         if (CurrentWater != null) { CurrentWater.Drink(); return; }
 
         if (CurrentStructure != null) CurrentStructure.PickUp();
+    }
+
+    ItemPickup FindPickup()
+    {
+        ItemPickup best = null;
+        float bestDist = pickupReach;
+
+        var all = ItemPickup.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var p = all[i];
+            if (p == null) continue;
+            float d = Vector3.Distance(p.transform.position, transform.position);
+            if (d < bestDist) { bestDist = d; best = p; }
+        }
+        return best;
     }
 
     SleepSpot FindSleep()
@@ -283,6 +309,7 @@ public class PlayerInteractor : MonoBehaviour
     public string Prompt()
     {
         if (CurrentWolf != null) return "Fight Wolf";
+        if (CurrentPickup != null) return CurrentPickup.Label();
         if (CurrentSleep != null)
         {
             string why;

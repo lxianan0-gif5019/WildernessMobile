@@ -118,7 +118,8 @@ public class BuildSystem : MonoBehaviour
                              (PlayerInteractor.Instance.Current != null ||
                               PlayerInteractor.Instance.CurrentAnimal != null ||
                               PlayerInteractor.Instance.CurrentWater != null ||
-                              PlayerInteractor.Instance.CurrentSleep != null);
+                              PlayerInteractor.Instance.CurrentSleep != null ||
+                              PlayerInteractor.Instance.CurrentPickup != null);
 
         if (InputHub.InteractDown && !aimingAtThing) Place(point, yaw);
     }
