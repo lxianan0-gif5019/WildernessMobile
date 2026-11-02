@@ -25,6 +25,7 @@ public class TouchRouter : MonoBehaviour
         public RectTransform rect;
         public Action action;
         public int layer;      // 0 = gameplay HUD, 1 = menus
+        public float pressedAt;
     }
 
     readonly List<Btn> buttons = new List<Btn>();
@@ -48,6 +49,8 @@ public class TouchRouter : MonoBehaviour
 
     void Update()
     {
+        AnimateButtons();
+
         if (Input.touchCount > 0)
         {
             for (int i = 0; i < Input.touchCount; i++)
@@ -84,6 +87,7 @@ public class TouchRouter : MonoBehaviour
             if (menuHit != null)
             {
                 menuHit.action();
+                menuHit.pressedAt = Time.unscaledTime;
                 if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.UiClick, 0.7f);
             }
             return;
@@ -102,9 +106,14 @@ public class TouchRouter : MonoBehaviour
         if (hit != null)
         {
             hit.action();
+            hit.pressedAt = Time.unscaledTime;
             if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.UiClick, 0.7f);
             return;
         }
+
+        // A panel is covering the screen: only its own buttons respond, the world
+        // must not move and the camera must not turn behind it.
+        if (GameUI.PanelOpen) return;
 
         if (lookFinger < 0)
         {
@@ -198,6 +207,22 @@ public class TouchRouter : MonoBehaviour
     }
 
     // ---------------------------------------------------------------- helpers
+    // ------------------------------------------------------------------ buttons
+    /// <summary>Brief shrink on press so the tap is visibly acknowledged.</summary>
+    void AnimateButtons()
+    {
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            var b = buttons[i];
+            if (b.rect == null) continue;
+
+            float t = Time.unscaledTime - b.pressedAt;
+            float s = t < 0.12f ? Mathf.Lerp(0.88f, 1f, t / 0.12f) : 1f;
+            if (Mathf.Abs(b.rect.localScale.x - s) > 0.001f)
+                b.rect.localScale = Vector3.one * s;
+        }
+    }
+
     Btn HitButton(Vector2 screenPos)
     {
         int wantLayer = InputHub.MenuOpen ? 1 : 0;

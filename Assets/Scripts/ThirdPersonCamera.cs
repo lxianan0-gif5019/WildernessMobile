@@ -11,8 +11,8 @@ public class ThirdPersonCamera : MonoBehaviour
     public float distance = 5f;
     public float height = 1.6f;
     public float mouseSensitivity = 1.6f;
-    public float minPitch = -15f;
-    public float maxPitch = 65f;
+    public float minPitch = -8f;
+    public float maxPitch = 62f;
 
     [Header("Look feel")]
     [Tooltip("Seconds of smoothing applied to the look direction. Higher = softer, less dizzy.")]
@@ -27,6 +27,12 @@ public class ThirdPersonCamera : MonoBehaviour
     [Header("Collision")]
     public float collisionRadius = 0.3f;
     public LayerMask collisionMask = ~0;
+    [Tooltip("Never come closer than this, so the character cannot fill the screen.")]
+    public float minDistance = 2.2f;
+    [Tooltip("Metres per second the camera moves back out after an obstruction clears.")]
+    public float recoverSpeed = 3.5f;
+    [Tooltip("Keep the camera at least this far above the terrain surface.")]
+    public float groundClearance = 0.6f;
 
     float yaw;
     float pitch = 18f;
@@ -36,6 +42,8 @@ public class ThirdPersonCamera : MonoBehaviour
     float pitchVelocity;
     Vector3 focusSmoothed;
     bool hasFocus;
+    float currentDistance;
+    float sensitivityScale = 1f;
 
     void Start()
     {
@@ -60,8 +68,12 @@ public class ThirdPersonCamera : MonoBehaviour
         // While a menu panel is open the cursor is free, so it must not turn the camera.
         if (!GameUI.PanelOpen && !InputHub.MenuOpen)
         {
-            yaw += InputHub.LookDelta.x * mouseSensitivity;
-            pitch -= InputHub.LookDelta.y * mouseSensitivity;
+            // The settings slider scales the base sensitivity (0.5x .. 4x).
+            sensitivityScale = Mathf.Clamp(GameSettings.LookSensitivity / 0.085f, 0.35f, 4f);
+            float sens = mouseSensitivity * sensitivityScale;
+
+            yaw += InputHub.LookDelta.x * sens;
+            pitch -= InputHub.LookDelta.y * sens * (GameSettings.InvertLook ? -1f : 1f);
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
         }
 
@@ -84,17 +96,41 @@ public class ThirdPersonCamera : MonoBehaviour
         Quaternion smoothedRot = Quaternion.Euler(pitchShown, yawShown, 0f);
 
         // --- position from the smoothed orientation (keeps camera and look direction in sync)
-        Vector3 desired = focusSmoothed - smoothedRot * Vector3.forward * distance;
+        Vector3 back = smoothedRot * Vector3.back;
 
-        // --- collision: sphere cast so thin obstacles do not make it snap
-        if (Physics.SphereCast(focusSmoothed, collisionRadius, (desired - focusSmoothed).normalized,
+        // --- collision: find the furthest unobstructed distance behind the focus point.
+        float wanted = distance;
+        if (Physics.SphereCast(focusSmoothed, collisionRadius, back,
                                out RaycastHit hit, distance, collisionMask, QueryTriggerInteraction.Ignore))
         {
             if (!hit.collider.transform.IsChildOf(target))
-            {
-                float safe = Mathf.Max(0.8f, hit.distance);
-                desired = focusSmoothed - smoothedRot * Vector3.forward * safe;
-            }
+                wanted = Mathf.Max(minDistance, hit.distance);
+        }
+
+        // Never closer than minDistance (the character would fill the frame), and
+        // never further than the configured distance.
+        wanted = Mathf.Clamp(wanted, Mathf.Min(minDistance, distance), distance);
+
+        // Pull in immediately (avoid clipping through geometry) but ease back out,
+        // so passing a tree does not snap the view.
+        if (currentDistance <= 0.01f) currentDistance = wanted;
+        if (wanted < currentDistance) currentDistance = wanted;
+        else currentDistance = Mathf.MoveTowards(currentDistance, wanted, recoverSpeed * Time.deltaTime);
+
+        Vector3 desired = focusSmoothed + back * currentDistance;
+
+        // --- keep the camera above the ground on slopes
+        var terrain = Terrain.activeTerrain;
+        if (terrain != null)
+        {
+            float ground = terrain.SampleHeight(desired) + terrain.transform.position.y;
+            if (desired.y < ground + groundClearance)
+                desired.y = ground + groundClearance;
+        }
+        else if (Physics.Raycast(desired + Vector3.up * 5f, Vector3.down, out RaycastHit groundHit, 20f, collisionMask, QueryTriggerInteraction.Ignore))
+        {
+            if (desired.y < groundHit.point.y + groundClearance)
+                desired.y = groundHit.point.y + groundClearance;
         }
 
         transform.position = desired;

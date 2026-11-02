@@ -24,10 +24,19 @@ public static class Loc
         { "menu.hint",          new[] { "WASD move   E use   Tab bag   C craft   B build   Esc menu",
                                         "WASD 移动   E 使用   Tab 背包   C 合成   B 建造   Esc 菜单" } },
         { "menu.empty",         new[] { "Empty",           "空存档" } },
+        { "menu.confirm_overwrite", new[] { "Tap again to overwrite", "再点一次覆盖" } },
+        { "menu.hint_mobile",   new[] { "Left stick to move   drag the right side to look   buttons on the right",
+                                        "左手摇杆移动   右半屏滑动转视角   右侧按钮操作" } },
         { "menu.slot",          new[] { "Slot",            "存档位" } },
         { "menu.back",          new[] { "Back",            "返回" } },
         { "menu.saved",         new[] { "Saved",           "已保存" } },
         { "menu.language",      new[] { "Language",        "语言" } },
+
+        // ---- in-game panels
+        { "ui.inventory",       new[] { "INVENTORY",       "背包" } },
+        { "ui.craft",           new[] { "CRAFTING",        "制作" } },
+        { "ui.crafting_start",  new[] { "Crafting {0}",    "开始制作 {0}" } },
+        { "ui.close",           new[] { "Close",           "关闭" } },
 
         // ---- settings
         { "set.master",         new[] { "Master Volume",   "总音量" } },

@@ -102,6 +102,8 @@ public class GameUI : MonoBehaviour
         UpdateStatBars();
         UpdateDamageFeedback();
         UpdateFireAudio();
+        UpdateToast();
+        UpdateFps();
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
@@ -141,67 +143,89 @@ public class GameUI : MonoBehaviour
         frt.offsetMin = Vector2.zero;
         frt.offsetMax = Vector2.zero;
 
+        // Everything except the damage flash lives inside the safe area, so nothing
+        // hides under a notch or a rounded corner.
+        var safeAreaGo = new GameObject("SafeArea");
+        var safeArea = safeAreaGo.AddComponent<RectTransform>();
+        safeArea.SetParent(root, false);
+        Rect safe = Screen.safeArea;
+        float sw = Mathf.Max(1f, Screen.width);
+        float sh = Mathf.Max(1f, Screen.height);
+        safeArea.anchorMin = new Vector2(safe.xMin / sw, safe.yMin / sh);
+        safeArea.anchorMax = new Vector2(safe.xMax / sw, safe.yMax / sh);
+        safeArea.offsetMin = Vector2.zero;
+        safeArea.offsetMax = Vector2.zero;
+
+        var content = safeArea;
+
         // HUD line
-        hud = MakeText(root, "HUD", "", 26, TextAnchor.UpperLeft);
-        Anchor(hud.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(920f, 40f), new Vector2(0f, 1f));
+        hud = MakeText(content, "HUD", "", 30, TextAnchor.UpperLeft);
+        Anchor(hud.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -20f), new Vector2(1100f, 44f), new Vector2(0f, 1f));
 
         // wolf warning
-        warning = MakeText(root, "Warning", "", 32, TextAnchor.MiddleCenter);
-        Anchor(warning.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(600f, 44f), new Vector2(0.5f, 1f));
+        warning = MakeText(content, "Warning", "", 36, TextAnchor.MiddleCenter);
+        Anchor(warning.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(640f, 48f), new Vector2(0.5f, 1f));
         warning.color = new Color(1f, 0.35f, 0.30f);
 
-        // --- survival bars, stacked under the HUD line
-        MakeStatBar(root, 0, "HP", new Color(0.85f, 0.22f, 0.22f), -64f);
-        MakeStatBar(root, 1, "FOOD", new Color(0.90f, 0.60f, 0.15f), -104f);
-        MakeStatBar(root, 2, "WATER", new Color(0.22f, 0.55f, 0.90f), -144f);
-        MakeStatBar(root, 3, "STAMINA", new Color(0.35f, 0.80f, 0.35f), -184f);
+        // --- survival bars
+        MakeStatBar(content, 0, Loc.T("stat.hp"), new Color(0.85f, 0.22f, 0.22f), -76f);
+        MakeStatBar(content, 1, Loc.T("stat.food"), new Color(0.90f, 0.60f, 0.15f), -126f);
+        MakeStatBar(content, 2, Loc.T("stat.water"), new Color(0.22f, 0.55f, 0.90f), -176f);
+        MakeStatBar(content, 3, Loc.T("stat.stamina"), new Color(0.35f, 0.80f, 0.35f), -226f);
 
-        // tutorial objective, under the bars
-        objective = MakeText(root, "Objective", "", 24, TextAnchor.UpperLeft);
-        Anchor(objective.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -228f), new Vector2(760f, 34f), new Vector2(0f, 1f));
+        // tutorial objective
+        objective = MakeText(content, "Objective", "", 28, TextAnchor.UpperLeft);
+        Anchor(objective.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -276f), new Vector2(820f, 38f), new Vector2(0f, 1f));
         objective.color = new Color(1f, 0.93f, 0.55f);
 
-        // Harvest / build prompt
-        prompt = MakeText(root, "Prompt", "", 30, TextAnchor.MiddleCenter);
-        Anchor(prompt.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 250f), new Vector2(900f, 44f), new Vector2(0.5f, 0f));
+        // interactive prompt
+        prompt = MakeText(content, "Prompt", "", 34, TextAnchor.MiddleCenter);
+        Anchor(prompt.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 270f), new Vector2(980f, 50f), new Vector2(0.5f, 0f));
 
-        // --- joystick (pivot CENTRE: local coords are then centred on the stick)
-        // --- joystick: a generous invisible touch pad with the visible stick inside it.
-        // The pad is larger than the circle so a thumb landing slightly off still grabs
-        // the stick instead of turning the camera.
-        var stickPad = MakeImage(root, "JoystickPad", new Color(0f, 0f, 0f, 0f), null);
-        Anchor(stickPad.rectTransform, new Vector2(0f, 0f), new Vector2(360f, 360f), new Vector2(400f, 400f), new Vector2(0.5f, 0.5f));
+        // --- joystick: generous invisible pad, visible stick inside it
+        var stickPad = MakeImage(content, "JoystickPad", new Color(0f, 0f, 0f, 0f), null);
+        Anchor(stickPad.rectTransform, new Vector2(0f, 0f), new Vector2(400f, 400f), new Vector2(460f, 460f), new Vector2(0.5f, 0.5f));
 
-        var stickBg = MakeImage(stickPad.rectTransform, "JoystickArea", new Color(1f, 1f, 1f, 0.12f), circle);
-        Anchor(stickBg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240f, 240f), new Vector2(0.5f, 0.5f));
+        var stickBg = MakeImage(stickPad.rectTransform, "JoystickArea", new Color(1f, 1f, 1f, 0.14f), circle);
+        Anchor(stickBg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(280f, 280f), new Vector2(0.5f, 0.5f));
 
-        var knob = MakeImage(stickPad.rectTransform, "Knob", new Color(1f, 1f, 1f, 0.55f), circle);
-        Anchor(knob.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(100f, 100f), new Vector2(0.5f, 0.5f));
+        var knob = MakeImage(stickPad.rectTransform, "Knob", new Color(1f, 1f, 1f, 0.60f), circle);
+        Anchor(knob.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(120f, 120f), new Vector2(0.5f, 0.5f));
 
         router.stickArea = stickPad.rectTransform;
         router.stickKnob = knob.rectTransform;
-        router.stickRadius = 95f;
+        router.stickRadius = 110f;
 
-        // --- action buttons anchored by screen RATIO so a wide phone cannot overlap them
-        MakeButton(root, "BagBtn", "Bag", new Vector2(1f, 0.88f), 140f, () => InputHub.InventoryDown = true);
-        MakeButton(root, "CraftBtn", "Craft", new Vector2(1f, 0.72f), 140f, () => InputHub.CraftDown = true);
-        MakeButton(root, "BuildBtn", "Build", new Vector2(1f, 0.56f), 140f, () => InputHub.BuildDown = true);
-        MakeButton(root, "UseBtn", "Use", new Vector2(1f, 0.30f), 150f, () => InputHub.InteractDown = true);
-        MakeButton(root, "JumpBtn", "Jump", new Vector2(1f, 0.14f), 150f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
-        MakeButton(root, "PauseBtn", "II", new Vector2(1f, 0.98f), 110f, () => { if (MenuUI.Instance != null) MenuUI.Instance.OpenPause(); });
+        // --- action buttons: bigger, further from the edge, Chinese labels
+        MakeButton(content, "UseBtn", "使用", new Vector2(1f, 0.30f), 180f, () => InputHub.InteractDown = true);
+        MakeButton(content, "JumpBtn", "跳", new Vector2(1f, 0.12f), 170f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
+        MakeButton(content, "BagBtn", "背包", new Vector2(1f, 0.86f), 170f, () => InputHub.InventoryDown = true);
+        MakeButton(content, "CraftBtn", "制作", new Vector2(1f, 0.68f), 170f, () => InputHub.CraftDown = true);
+        MakeButton(content, "BuildBtn", "建造", new Vector2(1f, 0.50f), 170f, () => InputHub.BuildDown = true);
+        MakeButton(content, "PauseBtn", "❚❚", new Vector2(1f, 0.99f), 120f, () => { if (MenuUI.Instance != null) MenuUI.Instance.OpenPause(); });
 
         // --- inventory panel
-        invPanel = MakePanel(root, "InventoryPanel", "INVENTORY", out invText);
+        invPanel = MakePanel(content, "InventoryPanel", Loc.T("ui.inventory"), new Vector2(1000f, 840f), out invText,
+                             () => { invOpen = false; invPanel.SetActive(false); RefreshCursor(); });
         invPanel.SetActive(false);
         MakeInventoryRows(invPanel.transform);
-        Anchor(invText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(700f, 42f), new Vector2(0.5f, 0f));
-        invText.alignment = TextAnchor.MiddleCenter;
-        invText.fontSize = 24;
 
         // --- crafting panel
-        craftPanel = MakePanel(root, "CraftPanel", "CRAFTING", out craftText);
+        craftPanel = MakePanel(content, "CraftPanel", Loc.T("ui.craft"), new Vector2(1460f, 900f), out craftText,
+                               () => { craftOpen = false; craftPanel.SetActive(false); RefreshCursor(); });
         craftPanel.SetActive(false);
         MakeCraftRows(craftPanel.transform);
+
+        // toast feedback line
+        toast = MakeText(content, "Toast", "", 30, TextAnchor.MiddleCenter);
+        Anchor(toast.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -330f), new Vector2(900f, 44f), new Vector2(0.5f, 1f));
+        toast.color = new Color(1f, 0.95f, 0.6f);
+
+        // optional FPS readout (F3)
+        fpsText = MakeText(content, "FPS", "", 22, TextAnchor.UpperRight);
+        Anchor(fpsText.rectTransform, new Vector2(1f, 1f), new Vector2(-28f, -20f), new Vector2(220f, 32f), new Vector2(1f, 1f));
+        fpsText.color = new Color(0.7f, 0.95f, 0.7f);
+        fpsText.gameObject.SetActive(false);
 
         Debug.Log("[UI] screen=" + Screen.width + "x" + Screen.height
                   + " canvasPos=" + crt.position
@@ -270,6 +294,51 @@ public class GameUI : MonoBehaviour
         AudioManager.Instance.SetFireLoop(near, near ? fire.transform : null);
     }
 
+    Text toast;
+    float toastUntil;
+    Text fpsText;
+    float fpsAccum;
+    int fpsFrames;
+
+    /// <summary>Short feedback line, e.g. "Wood +1" or "Need a Workbench".</summary>
+    public void ShowToast(string message)
+    {
+        if (toast == null) return;
+        toast.text = message;
+        toastUntil = Time.unscaledTime + 2.2f;
+        var c = toast.color;
+        c.a = 1f;
+        toast.color = c;
+    }
+
+    void UpdateFps()
+    {
+        if (fpsText == null) return;
+
+        if (Input.GetKeyDown(KeyCode.F3)) fpsText.gameObject.SetActive(!fpsText.gameObject.activeSelf);
+        if (!fpsText.gameObject.activeSelf) return;
+
+        fpsAccum += Time.unscaledDeltaTime;
+        fpsFrames++;
+        if (fpsAccum >= 0.5f)
+        {
+            float fps = fpsFrames / fpsAccum;
+            fpsText.text = Mathf.RoundToInt(fps) + " FPS   " + (1000f / Mathf.Max(1f, fps)).ToString("F1") + " ms";
+            fpsAccum = 0f;
+            fpsFrames = 0;
+        }
+    }
+
+    void UpdateToast()
+    {
+        if (toast == null || toast.text == "") return;
+        float left = toastUntil - Time.unscaledTime;
+        if (left <= 0f) { toast.text = ""; return; }
+        var c = toast.color;
+        c.a = Mathf.Clamp01(left / 0.6f);
+        toast.color = c;
+    }
+
     void UpdateStatBars()
     {
         var s = PlayerStats.Instance;
@@ -303,16 +372,17 @@ public class GameUI : MonoBehaviour
 
     bool loggedBars;
 
-    void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)    {
-        var img = MakeImage(parent, name, new Color(1f, 1f, 1f, 0.18f), circle);
+    void MakeButton(Transform parent, string name, string label, Vector2 anchor, float size, Action action)
+    {
+        var img = MakeImage(parent, name, new Color(1f, 1f, 1f, 0.20f), circle);
         var rt = img.rectTransform;
         rt.anchorMin = anchor;
         rt.anchorMax = anchor;
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.sizeDelta = new Vector2(size, size);
-        rt.anchoredPosition = new Vector2(-100f, 0f);
+        rt.anchoredPosition = new Vector2(-150f, 0f);          // keep clear of the edge
 
-        var t = MakeText(img.rectTransform, "Label", label, 27, TextAnchor.MiddleCenter);
+        var t = MakeText(img.rectTransform, "Label", label, Mathf.RoundToInt(size * 0.22f), TextAnchor.MiddleCenter);
         Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size), new Vector2(0.5f, 0.5f));
 
         router.RegisterButton(img.rectTransform, action);
@@ -322,11 +392,11 @@ public class GameUI : MonoBehaviour
     {
         for (int i = 0; i < InvRowCount; i++)
         {
-            var img = MakeImage(panel, "Row" + i, new Color(1f, 1f, 1f, 0.10f), circle);
-            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -104f - i * 44f), new Vector2(640f, 40f), new Vector2(0.5f, 1f));
+            var img = MakeImage(panel, "Row" + i, new Color(1f, 1f, 1f, 0.12f), circle);
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -120f - i * 54f), new Vector2(700f, 50f), new Vector2(0.5f, 1f));
 
-            var label = MakeText(img.rectTransform, "Label", "", 22, TextAnchor.MiddleLeft);
-            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 38f), new Vector2(0f, 0.5f));
+            var label = MakeText(img.rectTransform, "Label", "", 27, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(640f, 48f), new Vector2(0f, 0.5f));
 
             invLabels[i] = label;
             invRows[i] = img.gameObject;
@@ -347,14 +417,21 @@ public class GameUI : MonoBehaviour
     void MakeCraftRows(Transform panel)
     {
         craftRowLabels = new Text[RecipeCatalog.All.Count];
+        const int perColumn = 7;
+
         for (int i = 0; i < RecipeCatalog.All.Count; i++)
         {
             var r = RecipeCatalog.All[i];
-            var img = MakeImage(panel, "Craft" + r.outputId, new Color(1f, 1f, 1f, 0.12f), circle);
-            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f - i * 40f), new Vector2(700f, 36f), new Vector2(0.5f, 1f));
+            int col = i / perColumn;
+            int row = i % perColumn;
 
-            var label = MakeText(img.rectTransform, "Label", "", 20, TextAnchor.MiddleLeft);
-            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(670f, 34f), new Vector2(0f, 0.5f));
+            var img = MakeImage(panel, "Craft" + r.outputId, new Color(1f, 1f, 1f, 0.12f), circle);
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f),
+                   new Vector2(col == 0 ? -350f : 350f, -130f - row * 68f),
+                   new Vector2(660f, 60f), new Vector2(0.5f, 1f));
+
+            var label = MakeText(img.rectTransform, "Label", "", 24, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(20f, 0f), new Vector2(620f, 56f), new Vector2(0f, 0.5f));
 
             craftRowLabels[i] = label;
 
@@ -384,7 +461,16 @@ public class GameUI : MonoBehaviour
     {
         var r = RecipeCatalog.Find(outputId);
         if (r == null || CraftingController.Instance == null) return;
+
+        string reason = CraftingController.Instance.BlockReason(r);
+        if (!string.IsNullOrEmpty(reason))
+        {
+            ShowToast(reason);
+            return;
+        }
+
         CraftingController.Instance.StartCraft(r);
+        ShowToast(Loc.F("ui.crafting_start", ItemDatabase.Display(r.outputId)));
         RefreshCraft();
     }
 
@@ -395,6 +481,7 @@ public class GameUI : MonoBehaviour
             if (Inventory.Instance != null && Inventory.Instance.Spend("cooked_meat", 1) && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.Eat(45f, 0f);
+                ShowToast("+" + 45 + " " + Loc.T("stat.food"));
                 Debug.Log("[UI] ate cooked meat");
             }
             return;
@@ -415,6 +502,7 @@ public class GameUI : MonoBehaviour
             if (Inventory.Instance != null && Inventory.Instance.Spend("meat", 1) && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.Eat(26f, 0f);
+                ShowToast("+" + 26 + " " + Loc.T("stat.food"));
                 Debug.Log("[UI] ate raw meat");
             }
             return;
@@ -513,16 +601,23 @@ public class GameUI : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ helpers
-    GameObject MakePanel(Transform parent, string name, string title, out Text body)
+    GameObject MakePanel(Transform parent, string name, string title, Vector2 size, out Text body, Action onClose)
     {
-        var bg = MakeImage(parent, name, new Color(0.05f, 0.06f, 0.08f, 0.93f), null);
-        Anchor(bg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 560f), new Vector2(0.5f, 0.5f));
+        var bg = MakeImage(parent, name, new Color(0.05f, 0.06f, 0.08f, 0.95f), null);
+        Anchor(bg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, size, new Vector2(0.5f, 0.5f));
 
-        var t = MakeText(bg.rectTransform, "Title", title, 34, TextAnchor.UpperCenter);
-        Anchor(t.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(700f, 50f), new Vector2(0.5f, 1f));
+        var t = MakeText(bg.rectTransform, "Title", title, 44, TextAnchor.UpperCenter);
+        Anchor(t.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(size.x - 220f, 62f), new Vector2(0.5f, 1f));
 
-        body = MakeText(bg.rectTransform, "Body", "", 26, TextAnchor.UpperLeft);
-        Anchor(body.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -90f), new Vector2(700f, 60f), new Vector2(0f, 1f));
+        // big close button: the obvious way out on a phone
+        var close = MakeImage(bg.rectTransform, "Close", new Color(1f, 1f, 1f, 0.20f), circle);
+        Anchor(close.rectTransform, new Vector2(1f, 1f), new Vector2(-76f, -76f), new Vector2(100f, 100f), new Vector2(0.5f, 0.5f));
+        var cl = MakeText(close.rectTransform, "L", "✕", 46, TextAnchor.MiddleCenter);
+        Anchor(cl.rectTransform, Vector2.zero, Vector2.zero, new Vector2(100f, 100f), new Vector2(0.5f, 0.5f));
+        router.RegisterButton(close.rectTransform, onClose);
+
+        body = MakeText(bg.rectTransform, "Body", "", 28, TextAnchor.MiddleCenter);
+        Anchor(body.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(size.x - 140f, 46f), new Vector2(0.5f, 0f));
 
         return bg.gameObject;
     }

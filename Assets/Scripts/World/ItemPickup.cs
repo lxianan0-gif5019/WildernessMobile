@@ -31,12 +31,16 @@ public class ItemPickup : MonoBehaviour
     {
         var p = pool.Count > 0 ? pool.Pop() : CreateNew();
 
+        // Drop onto the ground instead of hovering where the hit happened.
+        float groundY = GroundHeight(position);
+        Vector3 rest = new Vector3(position.x, groundY + 0.22f, position.z);
+
         p.gameObject.SetActive(true);
-        p.transform.position = position;
+        p.transform.position = rest;
         p.transform.rotation = Quaternion.identity;
         p.itemId = id;
         p.amount = count;
-        p.restPos = position;
+        p.restPos = rest;
         p.bornAt = Time.time;
         p.collected = false;
         p.bobSeed = Random.value * 6f;
@@ -51,6 +55,18 @@ public class ItemPickup : MonoBehaviour
                 if (All[i] != p) { All[i].Expire(); break; }
         }
         return p;
+    }
+
+    /// <summary>Terrain height, or the first surface below the spawn point.</summary>
+    static float GroundHeight(Vector3 position)
+    {
+        var terrain = Terrain.activeTerrain;
+        if (terrain != null) return terrain.SampleHeight(position) + terrain.transform.position.y;
+
+        if (Physics.Raycast(position + Vector3.up * 8f, Vector3.down, out RaycastHit hit, 40f, ~0, QueryTriggerInteraction.Ignore))
+            return hit.point.y;
+
+        return position.y;
     }
 
     static ItemPickup CreateNew()
@@ -69,7 +85,7 @@ public class ItemPickup : MonoBehaviour
         cube.name = "Body";
         Destroy(cube.GetComponent<Collider>());
         cube.transform.SetParent(go.transform, false);
-        cube.transform.localScale = Vector3.one * 0.26f;
+        cube.transform.localScale = Vector3.one * 0.19f;
         cube.transform.localRotation = Quaternion.Euler(35f, 30f, 15f);
         cube.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
@@ -102,7 +118,7 @@ public class ItemPickup : MonoBehaviour
     {
         if (collected) return;
 
-        transform.position = restPos + Vector3.up * (0.18f + Mathf.Sin(Time.time * 2.4f + bobSeed) * 0.06f);
+        transform.position = restPos + Vector3.up * (Mathf.Sin(Time.time * 2.4f + bobSeed) * 0.04f);
         transform.Rotate(Vector3.up, 55f * Time.deltaTime, Space.World);
 
         // Drops never collect themselves: the player has to walk over and press the

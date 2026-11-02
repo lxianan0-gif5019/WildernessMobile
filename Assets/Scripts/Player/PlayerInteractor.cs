@@ -85,6 +85,8 @@ public class PlayerInteractor : MonoBehaviour
                 (Inventory.Instance == null || Inventory.Instance.Count(Current.requiredTool) == 0))
             {
                 Debug.Log("[Interact] need " + ItemDatabase.Display(Current.requiredTool) + " to harvest " + Current.displayName);
+                if (GameUI.Instance != null)
+                    GameUI.Instance.ShowToast(Loc.F("prompt.need_tool", Loc.ItemName(Current.requiredTool)));
                 return;
             }
             Current.Harvest(HarvestPower());

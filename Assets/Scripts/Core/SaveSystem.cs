@@ -51,6 +51,13 @@ public class SaveSystem : MonoBehaviour
 
     public static bool SlotExists(int s) { return File.Exists(PathForSlot(s)); }
 
+    /// <summary>When a slot was written, or DateTime.MinValue if it is empty.</summary>
+    public static System.DateTime SlotTime(int s)
+    {
+        var p = PathForSlot(s);
+        return File.Exists(p) ? File.GetLastWriteTime(p) : System.DateTime.MinValue;
+    }
+
     public void SaveToSlot(int s)
     {
         slot = s;

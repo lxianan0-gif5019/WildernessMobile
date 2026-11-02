@@ -148,10 +148,12 @@ public class MenuUI : MonoBehaviour
         Row(box.transform, "menu.settings", -428f, () => OpenSettings(false));
         Row(box.transform, "menu.quit", -524f, QuitGame);
 
-        var hint = MakeText(box.transform, "Hint", Loc.T("menu.hint"), 22, TextAnchor.MiddleCenter);
+        // platform-appropriate controls hint
+        string hintKey = Application.isMobilePlatform ? "menu.hint_mobile" : "menu.hint";
+        var hint = MakeText(box.transform, "Hint", Loc.T(hintKey), 22, TextAnchor.MiddleCenter);
         Anchor(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(720f, 60f), new Vector2(0.5f, 0f));
         hint.color = new Color(1f, 1f, 1f, 0.55f);
-        RegisterLocalized(hint, "menu.hint");
+        RegisterLocalized(hint, hintKey);
 
         return panel;
     }
@@ -275,9 +277,14 @@ public class MenuUI : MonoBehaviour
 
         if (saveMode)
         {
-            save.SaveToSlot(index);
-            RefreshSlots();
-            Debug.Log("[Menu] saved to slot " + index);
+            // overwriting an existing save asks for a second tap
+            if (SaveSystem.SlotExists(index) && pendingOverwriteSlot != index)
+            {
+                pendingOverwriteSlot = index;
+                pendingOverwriteAt = Time.unscaledTime;
+                RefreshSlots();
+                return;
+            }
         }
         else
         {
@@ -290,12 +297,22 @@ public class MenuUI : MonoBehaviour
             started = true;
             Close();
             Debug.Log("[Menu] loaded slot " + index);
+            return;
         }
+
+        save.SaveToSlot(index);
+        pendingOverwriteSlot = 0;
+        RefreshSlots();
+        Debug.Log("[Menu] saved to slot " + index);
     }
+
+    int pendingOverwriteSlot;
+    float pendingOverwriteAt;
 
     void OpenSlots(bool saving)
     {
         saveMode = saving;
+        pendingOverwriteSlot = 0;
         slotTitle.text = Loc.T(saving ? "menu.save" : "menu.load");
         RefreshSlots();
         mainPanel.SetActive(false);
@@ -311,8 +328,19 @@ public class MenuUI : MonoBehaviour
         {
             int slotIndex = i + 1;
             bool exists = SaveSystem.SlotExists(slotIndex);
-            slotLabels[i].text = Loc.T("menu.slot") + " " + slotIndex + "   -   "
-                               + (exists ? Loc.T("menu.saved") : Loc.T("menu.empty"));
+
+            if (pendingOverwriteSlot == slotIndex)
+            {
+                slotLabels[i].text = Loc.T("menu.slot") + " " + slotIndex + "   -   " + Loc.T("menu.confirm_overwrite");
+                slotLabels[i].color = new Color(1f, 0.75f, 0.3f);
+                continue;
+            }
+
+            string state;
+            if (!exists) state = Loc.T("menu.empty");
+            else state = SaveSystem.SlotTime(slotIndex).ToString("MM-dd HH:mm");
+
+            slotLabels[i].text = Loc.T("menu.slot") + " " + slotIndex + "   -   " + state;
             slotLabels[i].color = exists ? Color.white : new Color(1f, 1f, 1f, 0.5f);
         }
     }
