@@ -120,7 +120,7 @@ public class ItemPickup : MonoBehaviour
 
     public string Label()
     {
-        return "Pick up " + ItemDatabase.Display(itemId) + " x" + amount;
+        return Loc.F("prompt.pickup", Loc.ItemName(itemId), amount);
     }
 
     public void Expire()

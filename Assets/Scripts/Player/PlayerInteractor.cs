@@ -308,18 +308,18 @@ public class PlayerInteractor : MonoBehaviour
 
     public string Prompt()
     {
-        if (CurrentWolf != null) return "Fight Wolf";
-        if (CurrentPickup != null) return CurrentPickup.Label();
+        if (CurrentWolf != null) return Loc.T("prompt.fight");
+        if (CurrentPickup != null) return Loc.F("prompt.pickup", Loc.ItemName(CurrentPickup.itemId), CurrentPickup.amount);
         if (CurrentSleep != null)
         {
             string why;
-            return CurrentSleep.CanSleep(out why) ? "Sleep" : "Sleep (" + why + ")";
+            return CurrentSleep.CanSleep(out why) ? Loc.T("prompt.sleep") : Loc.F("prompt.sleep_block", why);
         }
-        if (CurrentAnimal != null) return "Hit " + CurrentAnimal.displayName;
-        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return "Cook meat";
-        if (Current != null) return "Harvest " + Current.displayName;
-        if (CurrentWater != null) return "Drink " + CurrentWater.displayName;
-        if (CurrentStructure != null) return "Pick up " + CurrentStructure.displayName;
+        if (CurrentAnimal != null) return Loc.F("prompt.hit", Loc.ItemName(CurrentAnimal.kind.ToString().ToLowerInvariant()));
+        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return Loc.T("prompt.cook");
+        if (Current != null) return Loc.F("prompt.harvest", Loc.ItemName(Current.itemId));
+        if (CurrentWater != null) return Loc.T("prompt.drink");
+        if (CurrentStructure != null) return Loc.F("prompt.pickup_str", Loc.ItemName(CurrentStructure.itemId));
         return "";
     }
 }

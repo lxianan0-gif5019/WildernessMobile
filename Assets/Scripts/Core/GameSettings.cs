@@ -9,6 +9,7 @@ public static class GameSettings
     public static float StickRadius = 95f;
     public static int Quality = 1;          // 0 low, 1 medium, 2 high
     public static bool InvertLook = false;
+    public static int Language = 0;         // 0 English, 1 Chinese
 
     static bool loaded;
 
@@ -23,6 +24,8 @@ public static class GameSettings
         StickRadius = PlayerPrefs.GetFloat("stickRadius", 95f);
         Quality = PlayerPrefs.GetInt("quality", 1);
         InvertLook = PlayerPrefs.GetInt("invertLook", 0) == 1;
+        Language = PlayerPrefs.GetInt("language", 1);      // default Chinese
+        Loc.Current = Language == 1 ? Loc.Lang.Chinese : Loc.Lang.English;
     }
 
     public static void Save()
@@ -33,6 +36,7 @@ public static class GameSettings
         PlayerPrefs.SetFloat("stickRadius", StickRadius);
         PlayerPrefs.SetInt("quality", Quality);
         PlayerPrefs.SetInt("invertLook", InvertLook ? 1 : 0);
+        PlayerPrefs.SetInt("language", Language);
         PlayerPrefs.Save();
     }
 

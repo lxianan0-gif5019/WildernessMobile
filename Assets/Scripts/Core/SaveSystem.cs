@@ -38,7 +38,30 @@ public class SaveSystem : MonoBehaviour
     public string fileName = "wilderness_save.json";
     public bool loadOnStart = true;
 
-    public string FilePath { get { return Path.Combine(Application.persistentDataPath, fileName); } }
+    [Tooltip("0 = the autosave/continue slot, 1-3 = manual slots.")]
+    public int slot = 0;
+
+    public string FilePath { get { return PathForSlot(slot); } }
+
+    public static string PathForSlot(int s)
+    {
+        string name = s <= 0 ? "wilderness_save.json" : "wilderness_save_slot" + s + ".json";
+        return Path.Combine(Application.persistentDataPath, name);
+    }
+
+    public static bool SlotExists(int s) { return File.Exists(PathForSlot(s)); }
+
+    public void SaveToSlot(int s)
+    {
+        slot = s;
+        Save();
+    }
+
+    public bool LoadFromSlot(int s)
+    {
+        slot = s;
+        return Load();
+    }
 
     void Awake() { Instance = this; }
 
@@ -117,9 +140,9 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    public void Load()
+    public bool Load()
     {
-        if (!File.Exists(FilePath)) { Debug.Log("[Save] no save file yet"); return; }
+        if (!File.Exists(FilePath)) { Debug.Log("[Save] no save file yet"); return false; }
 
         SaveData data;
         try
@@ -129,9 +152,9 @@ public class SaveSystem : MonoBehaviour
         catch (Exception e)
         {
             Debug.Log("[Save] load failed: " + e.Message);
-            return;
+            return false;
         }
-        if (data == null) return;
+        if (data == null) return false;
 
         if (data.version < CurrentVersion)
         {
@@ -198,7 +221,8 @@ public class SaveSystem : MonoBehaviour
             }
 
         Debug.Log("[Save] loaded " + (data.items != null ? data.items.Count : 0) + " stacks, "
-                  + (data.walls != null ? data.walls.Count : 0) + " walls, v" + data.version);
+                  + (data.walls != null ? data.walls.Count : 0) + " walls, v" + data.version + " (slot " + slot + ")");
+        return true;
     }
 
     void BackupOldSave(int oldVersion)

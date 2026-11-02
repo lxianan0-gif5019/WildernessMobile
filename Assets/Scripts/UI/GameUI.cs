@@ -28,6 +28,7 @@ public class GameUI : MonoBehaviour
 
     Image damageFlash;
     Text warning;
+    Text objective;
     float flashAlpha;
     float lastHealth = -1f;
 
@@ -50,6 +51,7 @@ public class GameUI : MonoBehaviour
         if (GetComponent<AudioManager>() == null) gameObject.AddComponent<AudioManager>();
         if (GetComponent<Diagnostics>() == null) gameObject.AddComponent<Diagnostics>();
         if (GetComponent<MenuUI>() == null) gameObject.AddComponent<MenuUI>();
+        if (GetComponent<Tutorial>() == null) gameObject.AddComponent<Tutorial>();
 
         Build();
         RefreshCursor();
@@ -65,11 +67,11 @@ public class GameUI : MonoBehaviour
             var sb = new System.Text.StringBuilder();
             foreach (var s in Inventory.Instance.items)
                 sb.Append(ItemDatabase.Display(s.id)).Append("  ").Append(s.count).Append("    ");
-            hud.text = sb.Length == 0 ? "Empty pack  -  WASD move, E harvest, Tab bag, C craft, B build" : sb.ToString();
+            hud.text = sb.Length == 0 ? Loc.T("hud.empty") : sb.ToString();
 
             var cc = CraftingController.Instance;
             if (cc != null && cc.Busy)
-                hud.text += "      CRAFTING " + cc.active.displayName + " " + Mathf.RoundToInt(cc.Progress * 100f) + "%";
+                hud.text += "      " + Loc.F("hud.crafting", ItemDatabase.Display(cc.active.outputId), Mathf.RoundToInt(cc.Progress * 100f));
         }
 
         if (prompt != null)
@@ -79,8 +81,8 @@ public class GameUI : MonoBehaviour
                 var type = BuildSystem.Instance.buildType;
                 int have = Inventory.Instance != null ? Inventory.Instance.Count(type) : 0;
                 prompt.text = have > 0
-                    ? "BUILD MODE   -   E to place " + ItemDatabase.Display(type) + " (" + have + ")   -   B to exit"
-                    : "BUILD MODE   -   no " + ItemDatabase.Display(type) + " left - craft one first   -   B to exit";
+                    ? Loc.F("hud.build_on", ItemDatabase.Display(type), have)
+                    : Loc.F("hud.build_none", ItemDatabase.Display(type));
             }
             else
             {
@@ -143,6 +145,11 @@ public class GameUI : MonoBehaviour
         MakeStatBar(root, 1, "FOOD", new Color(0.90f, 0.60f, 0.15f), -104f);
         MakeStatBar(root, 2, "WATER", new Color(0.22f, 0.55f, 0.90f), -144f);
         MakeStatBar(root, 3, "STAMINA", new Color(0.35f, 0.80f, 0.35f), -184f);
+
+        // tutorial objective, under the bars
+        objective = MakeText(root, "Objective", "", 24, TextAnchor.UpperLeft);
+        Anchor(objective.rectTransform, new Vector2(0f, 1f), new Vector2(24f, -228f), new Vector2(760f, 34f), new Vector2(0f, 1f));
+        objective.color = new Color(1f, 0.93f, 0.55f);
 
         // Harvest / build prompt
         prompt = MakeText(root, "Prompt", "", 30, TextAnchor.MiddleCenter);
@@ -231,8 +238,15 @@ public class GameUI : MonoBehaviour
         if (warning != null)
         {
             var w = WolfNight.Instance;
-            if (w != null && w.AliveCount > 0) warning.text = "WOLVES   x" + w.AliveCount;
+            if (w != null && w.AliveCount > 0) warning.text = Loc.F("hud.wolves", w.AliveCount);
             else warning.text = "";
+        }
+
+        if (objective != null)
+        {
+            var t = Tutorial.Instance;
+            objective.text = t != null ? Loc.T("tut.title") + ":  " + t.Objective() : "";
+            objective.color = (t != null && t.Done) ? new Color(0.6f, 0.95f, 0.6f) : new Color(1f, 0.93f, 0.55f);
         }
     }
 
@@ -241,10 +255,10 @@ public class GameUI : MonoBehaviour
         var s = PlayerStats.Instance;
         if (s == null) return;
 
-        SetBar(0, s.health, s.maxHealth, "HP");
-        SetBar(1, s.hunger, s.maxHunger, "FOOD");
-        SetBar(2, s.thirst, s.maxThirst, "WATER");
-        SetBar(3, s.stamina, s.maxStamina, "STAMINA");
+        SetBar(0, s.health, s.maxHealth, Loc.T("stat.hp"));
+        SetBar(1, s.hunger, s.maxHunger, Loc.T("stat.food"));
+        SetBar(2, s.thirst, s.maxThirst, Loc.T("stat.water"));
+        SetBar(3, s.stamina, s.maxStamina, Loc.T("stat.stamina"));
     }
 
     void SetBar(int i, float value, float max, string label)
@@ -332,7 +346,7 @@ public class GameUI : MonoBehaviour
     string RecipeLine(CraftingRecipe r, string reason)
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append(r.displayName.PadRight(13));
+        sb.Append(ItemDatabase.Display(r.outputId).PadRight(13));
         for (int i = 0; i < r.inputIds.Length; i++)
         {
             if (i > 0) sb.Append(" + ");
@@ -450,7 +464,7 @@ public class GameUI : MonoBehaviour
         }
 
         if (invText != null)
-            invText.text = row == 0 ? "(nothing yet - harvest a tree with E)" : "Tap an item to use it";
+            invText.text = row == 0 ? Loc.T("hud.nothing") : Loc.T("hud.take_out");
     }
 
     void RefreshCraft()

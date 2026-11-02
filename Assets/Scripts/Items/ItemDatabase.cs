@@ -49,7 +49,7 @@ public static class ItemDatabase
         return map.TryGetValue(id, out d) ? d : new Def { id = id, display = id, color = Color.white };
     }
 
-    public static string Display(string id) { return Get(id).display; }
+    public static string Display(string id) { return Loc.ItemName(id); }
 
     public static Color ItemColor(string id) { return Get(id).color; }
 }

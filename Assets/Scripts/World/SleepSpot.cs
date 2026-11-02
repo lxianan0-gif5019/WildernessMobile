@@ -9,8 +9,8 @@ public class SleepSpot : MonoBehaviour
 
     public bool CanSleep(out string reason)
     {
-        if (DayNightCycle.Instance == null) { reason = "no day cycle"; return false; }
-        if (!DayNightCycle.Instance.IsNight) { reason = "you can only sleep at night"; return false; }
+        if (DayNightCycle.Instance == null) { reason = Loc.T("sleep.night"); return false; }
+        if (!DayNightCycle.Instance.IsNight) { reason = Loc.T("sleep.night"); return false; }
 
         var wolves = FindObjectsOfType<Wolf>();
         for (int i = 0; i < wolves.Length; i++)
@@ -18,7 +18,7 @@ public class SleepSpot : MonoBehaviour
             if (wolves[i] == null || wolves[i].Dead) continue;
             if (Vector3.Distance(wolves[i].transform.position, transform.position) < safeRadius)
             {
-                reason = "wolves are too close to sleep";
+                reason = Loc.T("sleep.wolves");
                 return false;
             }
         }

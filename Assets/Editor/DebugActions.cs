@@ -38,6 +38,34 @@ public static class DebugActions
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
     }
 
+    [MenuItem("Wilderness/38. Debug Save Slot 1")]
+    public static void SaveSlot1()
+    {
+        if (SaveSystem.Instance == null) { Debug.Log("[Slot] no SaveSystem"); return; }
+        SaveSystem.Instance.SaveToSlot(1);
+        Debug.Log("[Slot] saved to slot 1, exists=" + SaveSystem.SlotExists(1));
+    }
+
+    [MenuItem("Wilderness/39. Debug Load Slot 1")]
+    public static void LoadSlot1()
+    {
+        if (SaveSystem.Instance == null) { Debug.Log("[Slot] no SaveSystem"); return; }
+        bool ok = SaveSystem.Instance.LoadFromSlot(1);
+        Debug.Log("[Slot] load slot 1 = " + ok);
+    }
+
+    [MenuItem("Wilderness/40. Debug Localization Status")]
+    public static void LocStatus()
+    {
+        var t = Object.FindObjectOfType<Tutorial>();
+        Debug.Log("[Loc] lang=" + Loc.Current
+                  + " | tutorial step=" + (t != null ? t.step : -1)
+                  + " | objective='" + (t != null ? t.Objective() : "?") + "'"
+                  + " | hp='" + Loc.T("stat.hp") + "'"
+                  + " | wood='" + Loc.ItemName("wood") + "'"
+                  + " | slots 1/2/3=" + SaveSystem.SlotExists(1) + "/" + SaveSystem.SlotExists(2) + "/" + SaveSystem.SlotExists(3));
+    }
+
     [MenuItem("Wilderness/36. Debug Menu State")]
     public static void MenuState()
     {
