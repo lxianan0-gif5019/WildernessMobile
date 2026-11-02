@@ -1,3 +1,5 @@
+// 职责：交互射线，决定 E 键对什么生效（狼/动物/采集/水/火/床/掉落/建筑）
+// 依赖：Inventory、BuildSystem、Loc、GameUI
 using UnityEngine;
 
 // Finds what the player is targeting: a harvestable resource, or a structure
@@ -217,10 +219,10 @@ public class PlayerInteractor : MonoBehaviour
         string tool = "";
         float power = 1f;
 
-        if (inv.Count("iron_axe") > 0) { tool = "iron_axe"; power = 3f; }
-        else if (inv.Count("iron_pick") > 0) { tool = "iron_pick"; power = 3f; }
-        else if (inv.Count("stone_axe") > 0) { tool = "stone_axe"; power = 2f; }
-        else if (inv.Count("stone_pick") > 0) { tool = "stone_pick"; power = 2f; }
+        if (inv.Count(ItemIds.IronAxe) > 0) { tool = ItemIds.IronAxe; power = 3f; }
+        else if (inv.Count(ItemIds.IronPick) > 0) { tool = ItemIds.IronPick; power = 3f; }
+        else if (inv.Count(ItemIds.StoneAxe) > 0) { tool = ItemIds.StoneAxe; power = 2f; }
+        else if (inv.Count(ItemIds.StonePick) > 0) { tool = ItemIds.StonePick; power = 2f; }
 
         if (tool != "" && ToolWear.Instance != null) ToolWear.Instance.Use(tool);
         return power;

@@ -1,3 +1,5 @@
+// 职责：计时合成，检查材料与设施距离，完成时结算
+// 依赖：Inventory、CraftingStation、AudioManager
 using UnityEngine;
 
 // Timed crafting. A recipe needs its ingredients, may need a nearby station,

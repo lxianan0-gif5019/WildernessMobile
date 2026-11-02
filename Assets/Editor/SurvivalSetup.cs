@@ -1,3 +1,5 @@
+// 职责：一次性场景装配（挂组件、重生成资源）
+// 依赖：PlayerStats、ResourceSpawner
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

@@ -1,3 +1,5 @@
+// 职责：主菜单/暂停/设置/存档位
+// 依赖：SaveSystem、GameSettings、Loc、TouchRouter
 using System;
 using System.Collections.Generic;
 using UnityEngine;

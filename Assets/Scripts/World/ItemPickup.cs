@@ -1,3 +1,5 @@
+// 职责：地面掉落物（对象池 + 共享材质 + 过期）
+// 依赖：Inventory、ItemDatabase、AudioManager、FlyItem
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +16,7 @@ public class ItemPickup : MonoBehaviour
     const float PickupRadius = 1.9f;
     const int SoftCap = 120;          // older drops start expiring beyond this
 
-    public string itemId = "wood";
+    public string itemId = ItemIds.Wood;
     public int amount = 1;
 
     [Tooltip("Seconds before an uncollected drop disappears.")]

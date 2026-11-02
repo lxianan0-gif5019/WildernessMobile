@@ -1,10 +1,12 @@
+// 职责：睡觉点，检查夜晚与狼距离后跳到早晨
+// 依赖：DayNightCycle、PlayerStats、Wolf
 using UnityEngine;
 
 // A place to sleep: a hay nest or a wooden bed. Sleeping skips to morning, but
 // only at night and only when no wolf is close.
 public class SleepSpot : MonoBehaviour
 {
-    public string kind = "hay_bed";
+    public string kind = ItemIds.HayBed;
     public float safeRadius = 18f;
 
     public bool CanSleep(out string reason)

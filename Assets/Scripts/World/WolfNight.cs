@@ -1,3 +1,5 @@
+// 职责：入夜生成狼、天亮清理
+// 依赖：Wolf、DayNightCycle、AudioManager
 using System.Collections.Generic;
 using UnityEngine;
 

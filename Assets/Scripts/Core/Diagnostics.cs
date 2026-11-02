@@ -1,3 +1,5 @@
+// 职责：把错误与设备信息写到本地日志，供手机排查
+// 依赖：无
 using System;
 using System.IO;
 using System.Text;

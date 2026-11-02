@@ -1,3 +1,5 @@
+// 职责：夜间狼（绕圈/冲刺/撕咬/怕火）
+// 依赖：PlayerStats、Campfire、DayNightCycle
 using UnityEngine;
 
 // Night predator. Circles the player, charges in, bites, and backs off when
@@ -153,8 +155,8 @@ public class Wolf : MonoBehaviour
         Dead = true;
         if (Inventory.Instance != null)
         {
-            Inventory.Instance.Add("meat", 2);
-            Inventory.Instance.Add("wolf_pelt", 1);
+            Inventory.Instance.Add(ItemIds.Meat, 2);
+            Inventory.Instance.Add(ItemIds.WolfPelt, 1);
         }
         Debug.Log("[Wolf] died");
         Destroy(gameObject, 0.1f);

@@ -1,3 +1,5 @@
+// 职责：第三人称环绕相机（距离/碰撞/平滑/抖动）
+// 依赖：InputHub、GameUI.PanelOpen、GameSettings
 using UnityEngine;
 
 // Orbit-follow camera for a third-person character.

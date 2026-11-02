@@ -1,3 +1,5 @@
+// 职责：所有触屏/鼠标的命中判定与按钮分发（不走 EventSystem）
+// 依赖：InputHub、GameUI、AudioManager
 using System;
 using System.Collections.Generic;
 using UnityEngine;

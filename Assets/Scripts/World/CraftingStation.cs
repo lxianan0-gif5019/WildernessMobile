@@ -1,3 +1,5 @@
+// 职责：工作台/熔炉标记，按距离解锁配方
+// 依赖：无
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +8,7 @@ public class CraftingStation : MonoBehaviour
 {
     public static readonly List<CraftingStation> All = new List<CraftingStation>();
 
-    public string kind = "workbench";
+    public string kind = ItemIds.Workbench;
     public float radius = 5f;
 
     void OnEnable() { All.Add(this); }

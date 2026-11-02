@@ -32,7 +32,52 @@
 | `World/DayNightCycle.cs` | 时间、太阳、雾、天空 | `timeOfDay` (0–1) | 无 |
 | `UI/GameUI.cs` | 生成整个 HUD、面板、按钮 | 面板开关状态 | Inventory、BuildSystem |
 
+### 2026-11-02 夜间新增的 7 个系统
+
+| 文件 | 职责 | 拥有什么 | 依赖谁 |
+|---|---|---|---|
+| `Core/Loc.cs` | 中英文字符串表 | 静态表 | 无 |
+| `Core/GameSettings.cs` | 设置存取与下发 | PlayerPrefs 镜像 | AudioManager、TouchRouter |
+| `Core/Diagnostics.cs` | 错误日志 + 设备信息 | 日志文件 | 无 |
+| `Audio/AudioManager.cs` | 全部音效（程序合成） | 音源池、波形 | 无 |
+| `UI/MenuUI.cs` | 主菜单/暂停/设置/存档位 | 菜单开关状态 | SaveSystem、GameSettings、TouchRouter |
+| `UI/Tutorial.cs` | 四步新手目标 | `step`、`woodPeak` | Inventory、CraftingStation、Campfire、DayNightCycle |
+| `Player/ToolWear.cs` | 工具耐久 | `wear` 字典 | Inventory、AudioManager |
+| `Items/CraftingController.cs` | 计时合成 | 当前配方与进度 | Inventory、CraftingStation |
+| `Items/ItemIds.cs` | 物品 id 常量 | 无 | 无 |
+| `World/ItemPickup.cs` | 地面掉落物（池化） | `All` 列表 | Inventory、ItemDatabase |
+| `World/Debris.cs` | 碎屑粒子（池化） | 池 | 无 |
+| `World/FlyItem.cs` | 拾取飞入动画 | 无 | 无 |
+| `World/Wolf.cs` / `WolfNight.cs` | 夜间狼与生成管理 | 狼列表 | PlayerStats、Campfire |
+| `World/Campfire.cs` | 篝火：照明/烹饪/燃料/驱兽 | `fuel`、静态 `All` | Inventory、AudioManager |
+| `World/CraftingStation.cs` | 工作台/熔炉标记 | 静态 `All` | 无 |
+| `World/SleepSpot.cs` | 睡觉点 | 无 | DayNightCycle、PlayerStats |
+
 ---
+
+## 静态状态登记表（⑤）
+
+**静态列表是唯一会跨场景泄漏的状态**，必须逐个说清谁创建、谁清理。
+
+| 静态容器 | 谁添加 | 谁移除 | 会不会漏 |
+|---|---|---|---|
+| `ItemPickup.All` | `Spawn()` | `Release()`（拾取/过期/超上限） | **不会**：120 上限 + 240 秒过期 |
+| `ResourceNode.Harvested` | `OnDestroy`（已采完） | `ApplyHarvested()` 读档时重建 | **会**：跨读档累积，但读档会整体替换 |
+| `Campfire.All` | `OnEnable` | `OnDisable` | 不会（随对象销毁自动摘除） |
+| `CraftingStation.All` | `OnEnable` | `OnDisable` | 不会 |
+| `WolfNight.wolves` | `SpawnOne()` | `Update()` 里剔除 null/Dead、天亮 `DespawnAll()` | 不会 |
+| `TouchRouter.buttons` | `RegisterButton` | **无移除接口** | **会**：菜单反复重建会累积失效按钮（目前只在启动时注册一次） |
+| `Debris` 池 | `Create` | `Release` | 不会（只回收不销毁） |
+| `ItemPickup.mats`（材质缓存） | 首次按 id 创建 | 无 | 不会（最多 21 个） |
+| `Loc.table` | 静态初始化 | 无 | 不会 |
+
+### 需要留意的两处
+
+1. **`TouchRouter.buttons` 没有注销接口** —— 如果以后做动态生成的按钮（例如滚动列表复用），必须先加 `UnregisterButton`，否则列表会越滚越大且旧按钮仍会响应。
+2. **`ResourceNode.Harvested` 是场景级 ID 集合** —— ID 由坐标取整生成，如果以后移动/复制资源点，可能出现坐标撞车导致误删。
+
+---
+
 
 ## 三条主线（最重要的部分）
 

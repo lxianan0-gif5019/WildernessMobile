@@ -1,3 +1,5 @@
+// 职责：篝火（照明/烹饪/燃料/驱兽/火花）
+// 依赖：Inventory、AudioManager、Debris
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,8 +16,8 @@ public class Campfire : MonoBehaviour
     public float flickerAmount = 0.18f;
 
     [Header("Cooking")]
-    public string rawItem = "meat";
-    public string cookedItem = "cooked_meat";
+    public string rawItem = ItemIds.Meat;
+    public string cookedItem = ItemIds.CookedMeat;
     public float repelRadius = 14f;
 
     Light fireLight;
@@ -86,7 +88,7 @@ public class Campfire : MonoBehaviour
     {
         if (Inventory.Instance == null) return false;
         if (fuel >= maxFuel - 1f) return false;
-        if (!Inventory.Instance.Spend("wood", 1)) return false;
+        if (!Inventory.Instance.Spend(ItemIds.Wood, 1)) return false;
 
         fuel = Mathf.Min(maxFuel, fuel + secondsPerWood);
         if (fireLight != null) fireLight.intensity = lightIntensity;

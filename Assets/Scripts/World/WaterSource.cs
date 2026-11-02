@@ -1,3 +1,5 @@
+// 职责：水源，交互补充口渴值
+// 依赖：PlayerStats
 using UnityEngine;
 
 // A water pool: interact to refill thirst. Also the thing that makes the

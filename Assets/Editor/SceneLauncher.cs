@@ -1,3 +1,5 @@
+// 职责：编辑器菜单，一键打开主场景
+// 依赖：无
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

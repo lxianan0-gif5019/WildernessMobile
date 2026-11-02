@@ -1,3 +1,5 @@
+// 职责：配方表（产物/材料/耗时/需要的设施）
+// 依赖：无
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,7 +13,7 @@ public class CraftingRecipe
     public string[] inputIds;
     public int[] inputCounts;
     public float seconds = 2f;
-    public string requiresStation = "";   // "" | "workbench" | "furnace"
+    public string requiresStation = "";   // "" | ItemIds.Workbench | ItemIds.Furnace
 
     public bool Matches(string output) { return outputId == output; }
 }
@@ -22,23 +24,23 @@ public static class RecipeCatalog
 
     static RecipeCatalog()
     {
-        Add("stick", "Stick", 2, new[] { "wood" }, new[] { 1 }, 1.5f, "");
-        Add("plank", "Plank", 2, new[] { "wood" }, new[] { 3 }, 2f, "");
-        Add("wall", "Wall", 1, new[] { "plank" }, new[] { 2 }, 2f, "");
-        Add("campfire", "Campfire", 1, new[] { "stone", "wood" }, new[] { 2, 3 }, 3f, "");
-        Add("workbench", "Workbench", 1, new[] { "wood", "stone" }, new[] { 6, 4 }, 5f, "");
-        Add("furnace", "Furnace", 1, new[] { "stone", "wood" }, new[] { 8, 4 }, 8f, "workbench");
+        Add(ItemIds.Stick, "Stick", 2, new[] { ItemIds.Wood }, new[] { 1 }, 1.5f, "");
+        Add(ItemIds.Plank, "Plank", 2, new[] { ItemIds.Wood }, new[] { 3 }, 2f, "");
+        Add(ItemIds.Wall, "Wall", 1, new[] { ItemIds.Plank }, new[] { 2 }, 2f, "");
+        Add(ItemIds.Campfire, "Campfire", 1, new[] { ItemIds.Stone, ItemIds.Wood }, new[] { 2, 3 }, 3f, "");
+        Add(ItemIds.Workbench, "Workbench", 1, new[] { ItemIds.Wood, ItemIds.Stone }, new[] { 6, 4 }, 5f, "");
+        Add(ItemIds.Furnace, "Furnace", 1, new[] { ItemIds.Stone, ItemIds.Wood }, new[] { 8, 4 }, 8f, ItemIds.Workbench);
 
-        Add("stone_axe", "Stone Axe", 1, new[] { "stick", "stone" }, new[] { 2, 3 }, 4f, "workbench");
-        Add("stone_pick", "Stone Pick", 1, new[] { "stick", "stone" }, new[] { 2, 3 }, 4f, "workbench");
+        Add(ItemIds.StoneAxe, "Stone Axe", 1, new[] { ItemIds.Stick, ItemIds.Stone }, new[] { 2, 3 }, 4f, ItemIds.Workbench);
+        Add(ItemIds.StonePick, "Stone Pick", 1, new[] { ItemIds.Stick, ItemIds.Stone }, new[] { 2, 3 }, 4f, ItemIds.Workbench);
 
-        Add("iron_ingot", "Iron Ingot", 1, new[] { "iron_ore", "wood" }, new[] { 2, 1 }, 8f, "furnace");
+        Add(ItemIds.IronIngot, "Iron Ingot", 1, new[] { ItemIds.IronOre, ItemIds.Wood }, new[] { 2, 1 }, 8f, ItemIds.Furnace);
 
-        Add("iron_axe", "Iron Axe", 1, new[] { "stick", "iron_ingot" }, new[] { 2, 2 }, 6f, "workbench");
-        Add("iron_pick", "Iron Pick", 1, new[] { "stick", "iron_ingot" }, new[] { 2, 2 }, 6f, "workbench");
+        Add(ItemIds.IronAxe, "Iron Axe", 1, new[] { ItemIds.Stick, ItemIds.IronIngot }, new[] { 2, 2 }, 6f, ItemIds.Workbench);
+        Add(ItemIds.IronPick, "Iron Pick", 1, new[] { ItemIds.Stick, ItemIds.IronIngot }, new[] { 2, 2 }, 6f, ItemIds.Workbench);
 
-        Add("hay_bed", "Hay Nest", 1, new[] { "fiber" }, new[] { 8 }, 5f, "");
-        Add("bed", "Wooden Bed", 1, new[] { "wood", "stick" }, new[] { 6, 4 }, 7f, "workbench");
+        Add(ItemIds.HayBed, "Hay Nest", 1, new[] { ItemIds.Fiber }, new[] { 8 }, 5f, "");
+        Add(ItemIds.Bed, "Wooden Bed", 1, new[] { ItemIds.Wood, ItemIds.Stick }, new[] { 6, 4 }, 7f, ItemIds.Workbench);
     }
 
     static void Add(string id, string name, int count, string[] ins, int[] amounts, float seconds, string station)
@@ -65,8 +67,8 @@ public static class RecipeCatalog
     public static string StationLabel(string station)
     {
         if (string.IsNullOrEmpty(station)) return "";
-        if (station == "workbench") return "Workbench";
-        if (station == "furnace") return "Furnace";
+        if (station == ItemIds.Workbench) return "Workbench";
+        if (station == ItemIds.Furnace) return "Furnace";
         return station;
     }
 }

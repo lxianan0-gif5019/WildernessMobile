@@ -1,3 +1,5 @@
+// 职责：APK 构建入口
+// 依赖：无
 using System;
 using System.IO;
 using UnityEditor;

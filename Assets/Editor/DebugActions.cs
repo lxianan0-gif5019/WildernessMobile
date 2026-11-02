@@ -1,3 +1,5 @@
+// 职责：编辑器调试菜单（采集/合成/存档/狼/掉落/本地化）
+// 依赖：全部运行时系统
 using UnityEngine;
 using UnityEditor;
 
@@ -8,7 +10,7 @@ public static class DebugActions
     [MenuItem("Wilderness/27. Debug Craft Sticks")]
     public static void CraftSticks()
     {
-        var r = RecipeCatalog.Find("stick");
+        var r = RecipeCatalog.Find(ItemIds.Stick);
         if (r == null || CraftingController.Instance == null) { Debug.Log("[Debug] no recipe/controller"); return; }
         bool ok = CraftingController.Instance.StartCraft(r);
         Debug.Log("[Debug] start stick = " + ok);
@@ -20,19 +22,19 @@ public static class DebugActions
         var player = GameObject.FindWithTag("Player");
         if (player == null || Inventory.Instance == null) { Debug.Log("[Debug] missing player/inventory"); return; }
 
-        Inventory.Instance.Add("wood", 20);
-        Inventory.Instance.Add("stone", 20);
+        Inventory.Instance.Add(ItemIds.Wood, 20);
+        Inventory.Instance.Add(ItemIds.Stone, 20);
 
-        var bench = BuildSystem.Instance.CreateStation("workbench", player.transform.position + player.transform.forward * 3f);
-        var furnace = BuildSystem.Instance.CreateStation("furnace", player.transform.position + player.transform.forward * 5f);
+        var bench = BuildSystem.Instance.CreateStation(ItemIds.Workbench, player.transform.position + player.transform.forward * 3f);
+        var furnace = BuildSystem.Instance.CreateStation(ItemIds.Furnace, player.transform.position + player.transform.forward * 5f);
         Debug.Log("[Debug] prep done bench=" + (bench != null) + " furnace=" + (furnace != null)
-                  + " stationNear=" + CraftingStation.Near("workbench", player.transform.position));
+                  + " stationNear=" + CraftingStation.Near(ItemIds.Workbench, player.transform.position));
     }
 
     [MenuItem("Wilderness/25. Debug Craft Stone Axe")]
     public static void CraftStoneAxe()
     {
-        var r = RecipeCatalog.Find("stone_axe");
+        var r = RecipeCatalog.Find(ItemIds.StoneAxe);
         if (r == null || CraftingController.Instance == null) { Debug.Log("[Debug] no recipe/controller"); return; }
         bool ok = CraftingController.Instance.StartCraft(r);
         Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
@@ -62,7 +64,7 @@ public static class DebugActions
                   + " | tutorial step=" + (t != null ? t.step : -1)
                   + " | objective='" + (t != null ? t.Objective() : "?") + "'"
                   + " | hp='" + Loc.T("stat.hp") + "'"
-                  + " | wood='" + Loc.ItemName("wood") + "'"
+                  + " | wood='" + Loc.ItemName(ItemIds.Wood) + "'"
                   + " | slots 1/2/3=" + SaveSystem.SlotExists(1) + "/" + SaveSystem.SlotExists(2) + "/" + SaveSystem.SlotExists(3));
     }
 
@@ -147,7 +149,7 @@ public static class DebugActions
         var player = GameObject.FindWithTag("Player");
         if (player == null) { Debug.Log("[Bed] no player"); return; }
 
-        var bed = BuildSystem.Instance.CreateBed("hay_bed", player.transform.position + player.transform.forward * 2.5f);
+        var bed = BuildSystem.Instance.CreateBed(ItemIds.HayBed, player.transform.position + player.transform.forward * 2.5f);
         var sleep = bed.GetComponent<SleepSpot>();
         string why;
         bool ok = sleep.Sleep(out why);
@@ -229,12 +231,12 @@ public static class DebugActions
         var go = BuildSystem.Instance.CreateCampfire(pos);
         var fire = go.GetComponent<Campfire>();
 
-        if (Inventory.Instance != null) Inventory.Instance.Add("meat", 2);
+        if (Inventory.Instance != null) Inventory.Instance.Add(ItemIds.Meat, 2);
         bool cooked = fire != null && fire.Cook();
 
         Debug.Log("[Debug] campfire placed, cooked=" + cooked
-                  + " meat=" + (Inventory.Instance != null ? Inventory.Instance.Count("meat") : -1)
-                  + " cooked_meat=" + (Inventory.Instance != null ? Inventory.Instance.Count("cooked_meat") : -1));
+                  + " meat=" + (Inventory.Instance != null ? Inventory.Instance.Count(ItemIds.Meat) : -1)
+                  + " cooked_meat=" + (Inventory.Instance != null ? Inventory.Instance.Count(ItemIds.CookedMeat) : -1));
     }
 
     [MenuItem("Wilderness/22. Debug Hunt Nearest Animal")]
@@ -259,7 +261,7 @@ public static class DebugActions
         best.TakeDamage(22f);
 
         if (Inventory.Instance != null)
-            Debug.Log("[Debug] meat=" + Inventory.Instance.Count("meat"));
+            Debug.Log("[Debug] meat=" + Inventory.Instance.Count(ItemIds.Meat));
     }
 
     [MenuItem("Wilderness/17. Debug Save Now")]
@@ -291,11 +293,11 @@ public static class DebugActions
         if (GameUI.Instance == null) { Debug.Log("[Debug] no GameUI"); return; }
         var inv = Inventory.Instance;
         if (inv == null) { Debug.Log("[Debug] no Inventory"); return; }
-        if (inv.Count("wall") == 0) inv.Add("wall", 1);
+        if (inv.Count(ItemIds.Wall) == 0) inv.Add(ItemIds.Wall, 1);
 
-        GameUI.Instance.OnItemClicked("wall");
+        GameUI.Instance.OnItemClicked(ItemIds.Wall);
         bool active = BuildSystem.Instance != null && BuildSystem.Instance.Active;
-        Debug.Log("[Debug] after OnItemClicked(wall): buildMode=" + active + " walls=" + inv.Count("wall") + " panelOpen=" + GameUI.PanelOpen);
+        Debug.Log("[Debug] after OnItemClicked(wall): buildMode=" + active + " walls=" + inv.Count(ItemIds.Wall) + " panelOpen=" + GameUI.PanelOpen);
     }
 
     [MenuItem("Wilderness/12. Debug Toggle Craft Panel")]
@@ -354,7 +356,7 @@ public static class DebugActions
 
         var inv = Inventory.Instance;
         if (inv != null)
-            Debug.Log("[Debug] inventory wood=" + inv.Count("wood") + " stone=" + inv.Count("stone") + " fiber=" + inv.Count("fiber"));
+            Debug.Log("[Debug] inventory wood=" + inv.Count(ItemIds.Wood) + " stone=" + inv.Count(ItemIds.Stone) + " fiber=" + inv.Count(ItemIds.Fiber));
     }
 
     [MenuItem("Wilderness/10. Debug Craft And Build")]
@@ -363,13 +365,13 @@ public static class DebugActions
         var inv = Inventory.Instance;
         if (inv == null) { Debug.Log("[Debug] no inventory"); return; }
 
-        inv.Add("wood", 30);
+        inv.Add(ItemIds.Wood, 30);
         if (GameUI.Instance != null)
         {
             for (int i = 0; i < 5; i++) GameUI.Instance.Craft("Plank");
             for (int i = 0; i < 2; i++) GameUI.Instance.Craft("Wall");
         }
         else Debug.Log("[Debug] no GameUI instance - crafting skipped");
-        Debug.Log("[Debug] after crafting wood=" + inv.Count("wood") + " plank=" + inv.Count("plank") + " wall=" + inv.Count("wall"));
+        Debug.Log("[Debug] after crafting wood=" + inv.Count(ItemIds.Wood) + " plank=" + inv.Count(ItemIds.Plank) + " wall=" + inv.Count(ItemIds.Wall));
     }
 }

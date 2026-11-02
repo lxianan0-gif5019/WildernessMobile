@@ -1,3 +1,5 @@
+// 职责：编辑器菜单，生成树/石/灌木/铁矿/水池
+// 依赖：ResourceNode、WaterSource
 using UnityEngine;
 using UnityEditor;
 
@@ -96,7 +98,7 @@ public static class ResourceSpawner
             col.radius = 0.5f;
 
             var node = go.AddComponent<ResourceNode>();
-            node.itemId = "wood";
+            node.itemId = ItemIds.Wood;
             node.displayName = "Tree";
             node.hitsToHarvest = 3;
             node.amountPerHit = 2;
@@ -129,7 +131,7 @@ public static class ResourceSpawner
             col.size = new Vector3(s, s * 0.8f, s);
 
             var node = go.AddComponent<ResourceNode>();
-            node.itemId = "stone";
+            node.itemId = ItemIds.Stone;
             node.displayName = "Rock";
             node.hitsToHarvest = 4;
             node.amountPerHit = 1;
@@ -160,11 +162,11 @@ public static class ResourceSpawner
             col.radius = 0.8f;
 
             var node = go.AddComponent<ResourceNode>();
-            node.itemId = "fiber";
+            node.itemId = ItemIds.Fiber;
             node.displayName = "Bush";
             node.hitsToHarvest = 1;
             node.amountPerHit = 3;
-            node.extraItemId = "berry";
+            node.extraItemId = ItemIds.Berry;
             node.extraAmount = 2;
         }
         return count;
@@ -202,11 +204,11 @@ public static class ResourceSpawner
             col.size = new Vector3(2.4f, 1.8f, 2.0f);
 
             var node = go.AddComponent<ResourceNode>();
-            node.itemId = "iron_ore";
+            node.itemId = ItemIds.IronOre;
             node.displayName = "Iron Vein";
             node.hitsToHarvest = 6;
             node.amountPerHit = 1;
-            node.requiredTool = "stone_pick";
+            node.requiredTool = ItemIds.StonePick;
             spawned++;
         }
         return spawned;

@@ -1,3 +1,5 @@
+// 职责：野生动物（游荡/逃跑/反击/掉落）
+// 依赖：Inventory、ItemPickup、Campfire
 using UnityEngine;
 
 // Wildlife. Wanders, flees when the player gets close, and can be hunted for meat.
@@ -9,7 +11,7 @@ public class Animal : MonoBehaviour
     [Header("Identity")]
     public Kind kind = Kind.Deer;
     public string displayName = "Deer";
-    public string dropItem = "meat";
+    public string dropItem = ItemIds.Meat;
     public int dropAmount = 2;
 
     [Header("Stats")]

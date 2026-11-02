@@ -1,3 +1,5 @@
+// 职责：昼夜循环、太阳/月亮/环境光/雾/天空
+// 依赖：无
 using UnityEngine;
 
 // Simple day/night cycle: rotates the sun, fades its colour and intensity, and

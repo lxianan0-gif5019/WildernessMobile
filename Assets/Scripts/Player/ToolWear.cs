@@ -1,3 +1,5 @@
+// 职责：工具耐久记账，用坏即扣除物品
+// 依赖：Inventory、AudioManager
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -53,10 +55,10 @@ public class ToolWear : MonoBehaviour
     {
         var inv = Inventory.Instance;
         if (inv == null) return "";
-        if (inv.Count("iron_axe") > 0) return "iron_axe";
-        if (inv.Count("iron_pick") > 0) return "iron_pick";
-        if (inv.Count("stone_axe") > 0) return "stone_axe";
-        if (inv.Count("stone_pick") > 0) return "stone_pick";
+        if (inv.Count(ItemIds.IronAxe) > 0) return ItemIds.IronAxe;
+        if (inv.Count(ItemIds.IronPick) > 0) return ItemIds.IronPick;
+        if (inv.Count(ItemIds.StoneAxe) > 0) return ItemIds.StoneAxe;
+        if (inv.Count(ItemIds.StonePick) > 0) return ItemIds.StonePick;
         return "";
     }
 }

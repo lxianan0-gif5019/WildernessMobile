@@ -1,3 +1,5 @@
+// 职责：角色移动、跳跃、重力、脚步音
+// 依赖：InputHub、PlayerStats
 using UnityEngine;
 
 // Third-person movement for a CharacterController body.

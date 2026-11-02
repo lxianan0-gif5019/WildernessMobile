@@ -1,3 +1,5 @@
+// 职责：建造模式、预览虚影与各类建筑生成
+// 依赖：Inventory、InputHub、PlayerInteractor
 using UnityEngine;
 
 // Build mode: shows a ghost of the item in front of the camera and places it on
@@ -10,7 +12,7 @@ public class BuildSystem : MonoBehaviour
     public float range = 8f;
 
     [Tooltip("Which item is currently being placed: 'wall' or 'campfire'.")]
-    public string buildType = "wall";
+    public string buildType = ItemIds.Wall;
 
     public bool Active { get; private set; }
 
@@ -64,7 +66,7 @@ public class BuildSystem : MonoBehaviour
 
     public void EnterBuildMode(string type)
     {
-        buildType = string.IsNullOrEmpty(type) ? "wall" : type;
+        buildType = string.IsNullOrEmpty(type) ? ItemIds.Wall : type;
         Active = true;
         if (ghost != null) ghost.SetActive(false);
         Debug.Log("[Build] build mode on for " + buildType);
@@ -90,17 +92,17 @@ public class BuildSystem : MonoBehaviour
             ghost.SetActive(hasItem);
             if (hasItem)
             {
-                if (buildType == "campfire")
+                if (buildType == ItemIds.Campfire)
                 {
                     ghost.transform.localScale = new Vector3(1.8f, 0.5f, 1.8f);
                     ghost.transform.position = point + Vector3.up * 0.25f;
                 }
-                else if (buildType == "workbench" || buildType == "furnace")
+                else if (buildType == ItemIds.Workbench || buildType == ItemIds.Furnace)
                 {
                     ghost.transform.localScale = new Vector3(2.0f, 1.2f, 1.2f);
                     ghost.transform.position = point + Vector3.up * 0.6f;
                 }
-                else if (buildType == "bed" || buildType == "hay_bed")
+                else if (buildType == ItemIds.Bed || buildType == ItemIds.HayBed)
                 {
                     ghost.transform.localScale = new Vector3(2.2f, 0.3f, 1.2f);
                     ghost.transform.position = point + Vector3.up * 0.15f;
@@ -157,9 +159,9 @@ public class BuildSystem : MonoBehaviour
             return;
         }
 
-        if (buildType == "campfire") CreateCampfire(point);
-        else if (buildType == "workbench" || buildType == "furnace") CreateStation(buildType, point);
-        else if (buildType == "bed" || buildType == "hay_bed") CreateBed(buildType, point);
+        if (buildType == ItemIds.Campfire) CreateCampfire(point);
+        else if (buildType == ItemIds.Workbench || buildType == ItemIds.Furnace) CreateStation(buildType, point);
+        else if (buildType == ItemIds.Bed || buildType == ItemIds.HayBed) CreateBed(buildType, point);
         else CreateWall(point + Vector3.up * 1.25f, yaw);
 
         Debug.Log("[Build] placed " + buildType);
@@ -168,7 +170,7 @@ public class BuildSystem : MonoBehaviour
     /// <summary>Hay nest or wooden bed: somewhere to sleep through the night.</summary>
     public GameObject CreateBed(string kind, Vector3 groundPosition)
     {
-        var root = new GameObject(kind == "bed" ? "Bed" : "HayNest");
+        var root = new GameObject(kind == ItemIds.Bed ? "Bed" : "HayNest");
         root.transform.position = groundPosition;
 
         var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -177,9 +179,9 @@ public class BuildSystem : MonoBehaviour
         body.transform.SetParent(root.transform, false);
         body.transform.localScale = new Vector3(2.2f, 0.28f, 1.2f);
         body.transform.localPosition = new Vector3(0f, 0.14f, 0f);
-        body.GetComponent<Renderer>().sharedMaterial = kind == "bed" ? bedMat : hayMat;
+        body.GetComponent<Renderer>().sharedMaterial = kind == ItemIds.Bed ? bedMat : hayMat;
 
-        if (kind == "bed")
+        if (kind == ItemIds.Bed)
         {
             var pillow = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pillow.name = "Pillow";
@@ -199,14 +201,14 @@ public class BuildSystem : MonoBehaviour
 
         var structure = root.AddComponent<PlacedStructure>();
         structure.itemId = kind;
-        structure.displayName = kind == "bed" ? "Bed" : "Hay Nest";
+        structure.displayName = kind == ItemIds.Bed ? "Bed" : "Hay Nest";
         return root;
     }
 
     /// <summary>Workbench / furnace: a box that unlocks recipes while you stand near it.</summary>
     public GameObject CreateStation(string kind, Vector3 groundPosition)
     {
-        var root = new GameObject(kind == "furnace" ? "Furnace" : "Workbench");
+        var root = new GameObject(kind == ItemIds.Furnace ? "Furnace" : "Workbench");
         root.transform.position = groundPosition;
 
         var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -215,7 +217,7 @@ public class BuildSystem : MonoBehaviour
         body.transform.SetParent(root.transform, false);
         body.transform.localScale = new Vector3(2f, 1f, 1.1f);
         body.transform.localPosition = new Vector3(0f, 0.5f, 0f);
-        body.GetComponent<Renderer>().sharedMaterial = kind == "furnace" ? furnaceMat : benchMat;
+        body.GetComponent<Renderer>().sharedMaterial = kind == ItemIds.Furnace ? furnaceMat : benchMat;
 
         var col = root.AddComponent<BoxCollider>();
         col.center = new Vector3(0f, 0.5f, 0f);
@@ -227,7 +229,7 @@ public class BuildSystem : MonoBehaviour
 
         var structure = root.AddComponent<PlacedStructure>();
         structure.itemId = kind;
-        structure.displayName = kind == "furnace" ? "Furnace" : "Workbench";
+        structure.displayName = kind == ItemIds.Furnace ? "Furnace" : "Workbench";
         return root;
     }
 
@@ -242,7 +244,7 @@ public class BuildSystem : MonoBehaviour
         wall.GetComponent<Renderer>().sharedMaterial = wallMat;
 
         var structure = wall.AddComponent<PlacedStructure>();
-        structure.itemId = "wall";
+        structure.itemId = ItemIds.Wall;
         structure.displayName = "Wall";
         return wall;
     }
@@ -272,7 +274,7 @@ public class BuildSystem : MonoBehaviour
         root.AddComponent<Campfire>();
 
         var structure = root.AddComponent<PlacedStructure>();
-        structure.itemId = "campfire";
+        structure.itemId = ItemIds.Campfire;
         structure.displayName = "Campfire";
         return root;
     }

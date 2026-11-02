@@ -1,3 +1,5 @@
+// 职责：文件命令通道，cmd.json → 编辑器执行 → result.json
+// 依赖：无
 using System;
 using System.IO;
 using UnityEditor;

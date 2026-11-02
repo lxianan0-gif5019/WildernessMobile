@@ -1,3 +1,5 @@
+// 职责：输入的唯一中转站，键鼠与触屏都写这里
+// 依赖：无
 using UnityEngine;
 
 // Single source of input for both keyboard/mouse and touch.

@@ -1,3 +1,5 @@
+// 职责：玩家设置（音量/灵敏度/画质/语言）的存取与下发
+// 依赖：AudioManager、TouchRouter、QualitySettings
 using UnityEngine;
 
 // Player-facing settings, persisted with PlayerPrefs and applied to the systems.

@@ -1,3 +1,5 @@
+// 职责：HUD 门面（状态条/按钮/提示/Toast），调度各面板
+// 依赖：Inventory、PlayerStats、CraftingController、ToolWear、Tutorial、MenuUI
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -476,9 +478,9 @@ public class GameUI : MonoBehaviour
 
     public void OnItemClicked(string id)
     {
-        if (id == "cooked_meat")
+        if (id == ItemIds.CookedMeat)
         {
-            if (Inventory.Instance != null && Inventory.Instance.Spend("cooked_meat", 1) && PlayerStats.Instance != null)
+            if (Inventory.Instance != null && Inventory.Instance.Spend(ItemIds.CookedMeat, 1) && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.Eat(45f, 0f);
                 ShowToast("+" + 45 + " " + Loc.T("stat.food"));
@@ -487,7 +489,7 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace" || id == "bed" || id == "hay_bed")
+        if (id == ItemIds.Wall || id == ItemIds.Campfire || id == ItemIds.Workbench || id == ItemIds.Furnace || id == ItemIds.Bed || id == ItemIds.HayBed)
         {
             if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode(id);
             invOpen = false; if (invPanel != null) invPanel.SetActive(false);
@@ -497,9 +499,9 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "meat")
+        if (id == ItemIds.Meat)
         {
-            if (Inventory.Instance != null && Inventory.Instance.Spend("meat", 1) && PlayerStats.Instance != null)
+            if (Inventory.Instance != null && Inventory.Instance.Spend(ItemIds.Meat, 1) && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.Eat(26f, 0f);
                 ShowToast("+" + 26 + " " + Loc.T("stat.food"));
@@ -508,9 +510,9 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "berry")
+        if (id == ItemIds.Berry)
         {
-            if (Inventory.Instance != null && Inventory.Instance.Spend("berry", 1) && PlayerStats.Instance != null)
+            if (Inventory.Instance != null && Inventory.Instance.Spend(ItemIds.Berry, 1) && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.Eat(12f, 6f);
                 Debug.Log("[UI] ate a berry");
@@ -518,7 +520,7 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace")
+        if (id == ItemIds.Wall || id == ItemIds.Campfire || id == ItemIds.Workbench || id == ItemIds.Furnace)
         {
             // handled above
         }
@@ -593,10 +595,10 @@ public class GameUI : MonoBehaviour
             if (cc != null && cc.Busy)
                 craftText.text = "Crafting " + cc.active.displayName + "   " + Mathf.RoundToInt(cc.Progress * 100f) + "%";
             else
-                craftText.text = "Wood " + Inventory.Instance.Count("wood")
-                               + "   Stone " + Inventory.Instance.Count("stone")
-                               + "   Stick " + Inventory.Instance.Count("stick")
-                               + "   Iron " + Inventory.Instance.Count("iron_ingot");
+                craftText.text = "Wood " + Inventory.Instance.Count(ItemIds.Wood)
+                               + "   Stone " + Inventory.Instance.Count(ItemIds.Stone)
+                               + "   Stick " + Inventory.Instance.Count(ItemIds.Stick)
+                               + "   Iron " + Inventory.Instance.Count(ItemIds.IronIngot);
         }
     }
 

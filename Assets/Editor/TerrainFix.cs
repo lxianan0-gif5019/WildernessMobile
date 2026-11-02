@@ -1,3 +1,5 @@
+// 职责：编辑器菜单，修复地形图层贴图
+// 依赖：无
 using UnityEditor;
 using UnityEngine;
 

@@ -1,3 +1,5 @@
+// 职责：生命/饥饿/口渴/体力的唯一真源
+// 依赖：AudioManager、ThirdPersonCamera
 using UnityEngine;
 
 // The four survival stats. Single owner of the numbers; everything else reads

@@ -1,3 +1,5 @@
+// 职责：键鼠输入 → InputHub
+// 依赖：InputHub
 using UnityEngine;
 
 // Keyboard + mouse into InputHub. Runs before everything else so one-shot

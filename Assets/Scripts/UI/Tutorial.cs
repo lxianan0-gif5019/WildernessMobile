@@ -1,3 +1,5 @@
+// 职责：四步新手目标链
+// 依赖：Inventory、CraftingStation、Campfire、DayNightCycle
 using UnityEngine;
 
 // A four-step first-run objective chain: wood -> workbench -> campfire -> first night.
@@ -13,7 +15,7 @@ public class Tutorial : MonoBehaviour
     void Update()
     {
         if (Inventory.Instance != null)
-            woodPeak = Mathf.Max(woodPeak, Inventory.Instance.Count("wood"));
+            woodPeak = Mathf.Max(woodPeak, Inventory.Instance.Count(ItemIds.Wood));
 
         switch (step)
         {
@@ -21,7 +23,7 @@ public class Tutorial : MonoBehaviour
                 if (woodPeak >= 5) step = 1;
                 break;
             case 1:
-                if (HasStation("workbench")) step = 2;
+                if (HasStation(ItemIds.Workbench)) step = 2;
                 break;
             case 2:
                 if (Campfire.All.Count > 0) step = 3;

@@ -1,3 +1,5 @@
+// 职责：拾取时飞向背包的补间小方块
+// 依赖：无
 using UnityEngine;
 
 // The little "item flies into your backpack" flourish shown when a drop is picked up.

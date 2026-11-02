@@ -1,3 +1,5 @@
+// 职责：可采集资源，掉落物落在地上，记录已采集 id
+// 依赖：ItemPickup、Inventory
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,7 +7,7 @@ using UnityEngine;
 // Something the player can harvest with the interact key.
 public class ResourceNode : MonoBehaviour
 {
-    public string itemId = "wood";
+    public string itemId = ItemIds.Wood;
     public string displayName = "Tree";
     public int hitsToHarvest = 3;
     public int amountPerHit = 1;

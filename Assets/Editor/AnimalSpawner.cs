@@ -1,3 +1,5 @@
+// 职责：编辑器菜单，生成野生动物
+// 依赖：Animal
 using UnityEngine;
 using UnityEditor;
 

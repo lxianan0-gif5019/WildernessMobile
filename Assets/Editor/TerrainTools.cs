@@ -1,3 +1,5 @@
+// 职责：编辑器菜单，生成森林地形
+// 依赖：无
 using System;
 using System.Collections.Generic;
 using UnityEditor;

@@ -1,3 +1,5 @@
+// 职责：中英文字符串表，所有 UI 文本的唯一来源
+// 依赖：无
 using System.Collections.Generic;
 
 // Tiny string table. English + Chinese, switchable at runtime.

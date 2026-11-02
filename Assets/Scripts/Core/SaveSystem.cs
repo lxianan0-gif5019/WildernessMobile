@@ -1,3 +1,5 @@
+// 职责：JSON 存档读写 + 版本迁移，不持有游戏数据
+// 依赖：Inventory、DayNightCycle、BuildSystem、PlayerStats、ResourceNode、ItemPickup
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +23,7 @@ public class SaveData
 public class ItemEntry { public string id; public int count; }
 
 [Serializable]
-public class WallEntry { public float x, y, z, ry; public string type = "wall"; }
+public class WallEntry { public float x, y, z, ry; public string type = ItemIds.Wall; }
 
 [Serializable]
 public class PickupEntry { public string id; public int count; public float x, y, z; }
@@ -221,9 +223,9 @@ public class SaveSystem : MonoBehaviour
         if (data.walls != null && BuildSystem.Instance != null)
             foreach (var w in data.walls)
             {
-                if (w.type == "campfire") BuildSystem.Instance.CreateCampfire(new Vector3(w.x, w.y, w.z));
-                else if (w.type == "workbench" || w.type == "furnace") BuildSystem.Instance.CreateStation(w.type, new Vector3(w.x, w.y, w.z));
-                else if (w.type == "bed" || w.type == "hay_bed") BuildSystem.Instance.CreateBed(w.type, new Vector3(w.x, w.y, w.z));
+                if (w.type == ItemIds.Campfire) BuildSystem.Instance.CreateCampfire(new Vector3(w.x, w.y, w.z));
+                else if (w.type == ItemIds.Workbench || w.type == ItemIds.Furnace) BuildSystem.Instance.CreateStation(w.type, new Vector3(w.x, w.y, w.z));
+                else if (w.type == ItemIds.Bed || w.type == ItemIds.HayBed) BuildSystem.Instance.CreateBed(w.type, new Vector3(w.x, w.y, w.z));
                 else BuildSystem.Instance.CreateWall(new Vector3(w.x, w.y, w.z), w.ry);
             }
 

@@ -1,3 +1,5 @@
+// 职责：背包数据的唯一真源，只暴露 Add/Spend/Clear/Count
+// 依赖：无
 using System;
 using System.Collections.Generic;
 using UnityEngine;

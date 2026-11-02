@@ -1,3 +1,5 @@
+// 职责：代码生成的碎屑粒子（对象池）
+// 依赖：无
 using System.Collections.Generic;
 using UnityEngine;
 
