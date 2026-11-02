@@ -19,6 +19,11 @@ public class PlayerInteractor : MonoBehaviour
     public ResourceNode Current { get; private set; }
     public PlacedStructure CurrentStructure { get; private set; }
     public WaterSource CurrentWater { get; private set; }
+    public Animal CurrentAnimal { get; private set; }
+    public Campfire CurrentCampfire { get; private set; }
+
+    [Tooltip("Damage dealt to an animal per interact press.")]
+    public float attackDamage = 22f;
 
     ResourceNode[] cached;
     float nextScan;
@@ -34,8 +39,16 @@ public class PlayerInteractor : MonoBehaviour
         Current = FindResource();
         CurrentStructure = FindStructure();
         CurrentWater = FindWater();
+        CurrentAnimal = FindAnimal();
+        CurrentCampfire = FindCampfire();
 
         if (!InputHub.InteractDown) return;
+
+        // Hunting comes first: if you are aiming at an animal, that is the intent.
+        if (CurrentAnimal != null) { CurrentAnimal.TakeDamage(attackDamage); return; }
+
+        // Cooking at a fire beats picking it up.
+        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) { CurrentCampfire.Cook(); return; }
 
         if (Current != null) { Current.Harvest(); return; }
 
@@ -45,6 +58,50 @@ public class PlayerInteractor : MonoBehaviour
         if (CurrentWater != null) { CurrentWater.Drink(); return; }
 
         if (CurrentStructure != null) CurrentStructure.PickUp();
+    }
+
+    Campfire FindCampfire()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        Campfire found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var c = h.collider.GetComponentInParent<Campfire>();
+            if (c == null) continue;
+            if (Vector3.Distance(c.transform.position, transform.position) > pickupReach) continue;
+
+            if (h.distance < best) { best = h.distance; found = c; }
+        }
+        return found;
+    }
+
+    Animal FindAnimal()
+    {
+        if (cam == null) return null;
+
+        var hits = Physics.RaycastAll(cam.transform.position, cam.transform.forward, rayLength, ~0, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue;
+        Animal found = null;
+
+        foreach (var h in hits)
+        {
+            if (h.collider == null) continue;
+            if (transform.root != null && h.collider.transform.IsChildOf(transform.root)) continue;
+
+            var a = h.collider.GetComponentInParent<Animal>();
+            if (a == null) continue;
+            if (Vector3.Distance(a.transform.position, transform.position) > reach + 1.5f) continue;
+
+            if (h.distance < best) { best = h.distance; found = a; }
+        }
+        return found;
     }
 
     WaterSource FindWater()
@@ -145,6 +202,8 @@ public class PlayerInteractor : MonoBehaviour
 
     public string Prompt()
     {
+        if (CurrentAnimal != null) return "Hit " + CurrentAnimal.displayName;
+        if (CurrentCampfire != null && CurrentCampfire.HasMeat()) return "Cook meat";
         if (Current != null) return "Harvest " + Current.displayName;
         if (CurrentWater != null) return "Drink " + CurrentWater.displayName;
         if (CurrentStructure != null) return "Pick up " + CurrentStructure.displayName;

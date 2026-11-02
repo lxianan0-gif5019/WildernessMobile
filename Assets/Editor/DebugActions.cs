@@ -5,6 +5,50 @@ using UnityEditor;
 // gameplay code without a keyboard. Remove them once hand testing is done.
 public static class DebugActions
 {
+    [MenuItem("Wilderness/23. Debug Campfire Test")]
+    public static void CampfireTest()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[Debug] no player"); return; }
+        if (BuildSystem.Instance == null) { Debug.Log("[Debug] no BuildSystem"); return; }
+
+        Vector3 pos = player.transform.position + player.transform.forward * 3f;
+        var go = BuildSystem.Instance.CreateCampfire(pos);
+        var fire = go.GetComponent<Campfire>();
+
+        if (Inventory.Instance != null) Inventory.Instance.Add("meat", 2);
+        bool cooked = fire != null && fire.Cook();
+
+        Debug.Log("[Debug] campfire placed, cooked=" + cooked
+                  + " meat=" + (Inventory.Instance != null ? Inventory.Instance.Count("meat") : -1)
+                  + " cooked_meat=" + (Inventory.Instance != null ? Inventory.Instance.Count("cooked_meat") : -1));
+    }
+
+    [MenuItem("Wilderness/22. Debug Hunt Nearest Animal")]
+    public static void HuntNearest()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[Debug] no player"); return; }
+
+        Animal best = null;
+        float bestDist = float.MaxValue;
+        foreach (var a in Object.FindObjectsOfType<Animal>())
+        {
+            float d = Vector3.Distance(a.transform.position, player.transform.position);
+            if (d < bestDist) { bestDist = d; best = a; }
+        }
+        if (best == null) { Debug.Log("[Debug] no animals in scene"); return; }
+
+        Debug.Log("[Debug] hunting " + best.displayName + " at " + bestDist.ToString("F1") + "m");
+        best.TakeDamage(22f);
+        best.TakeDamage(22f);
+        best.TakeDamage(22f);
+        best.TakeDamage(22f);
+
+        if (Inventory.Instance != null)
+            Debug.Log("[Debug] meat=" + Inventory.Instance.Count("meat"));
+    }
+
     [MenuItem("Wilderness/17. Debug Save Now")]
     public static void SaveNow()
     {

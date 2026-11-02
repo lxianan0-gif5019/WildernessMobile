@@ -19,9 +19,9 @@ public class GameUI : MonoBehaviour
     GameObject invPanel, craftPanel;
     bool invOpen, craftOpen;
 
-    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall", "berry" };
-    readonly Text[] invLabels = new Text[6];
-    readonly GameObject[] invRows = new GameObject[6];
+    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall", "campfire", "berry", "meat", "cooked_meat" };
+    readonly Text[] invLabels = new Text[9];
+    readonly GameObject[] invRows = new GameObject[9];
 
     // survival bars: health, hunger, thirst, stamina
     readonly Image[] statFills = new Image[4];
@@ -233,10 +233,10 @@ public class GameUI : MonoBehaviour
             string id = InvItems[i];
 
             var img = MakeImage(panel, "Row_" + id, new Color(1f, 1f, 1f, 0.10f), circle);
-            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -110f - i * 66f), new Vector2(640f, 58f), new Vector2(0.5f, 1f));
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -104f - i * 50f), new Vector2(640f, 46f), new Vector2(0.5f, 1f));
 
-            var label = MakeText(img.rectTransform, "Label", "", 26, TextAnchor.MiddleLeft);
-            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 52f), new Vector2(0f, 0.5f));
+            var label = MakeText(img.rectTransform, "Label", "", 23, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 42f), new Vector2(0f, 0.5f));
 
             invLabels[i] = label;
             invRows[i] = img.gameObject;
@@ -247,8 +247,9 @@ public class GameUI : MonoBehaviour
 
     void MakeCraftRows(Transform panel)
     {
-        MakeCraftRow(panel, "Plank", "Plank     3 Wood -> 2", 0);
-        MakeCraftRow(panel, "Wall", "Wall      2 Plank -> 1", 1);
+        MakeCraftRow(panel, "Plank", "Plank      3 Wood  ->  2", 0);
+        MakeCraftRow(panel, "Wall", "Wall       2 Plank ->  1", 1);
+        MakeCraftRow(panel, "Campfire", "Campfire   2 Stone + 3 Wood -> 1", 2);
     }
 
     void MakeCraftRow(Transform panel, string recipe, string label, int index)
@@ -276,10 +277,44 @@ public class GameUI : MonoBehaviour
         {
             if (inv.Spend("plank", 2)) inv.Add("wall", 1);
         }
+        else if (recipe == "Campfire")
+        {
+            if (inv.Spend("stone", 2) && inv.Spend("wood", 3)) inv.Add("campfire", 1);
+        }
     }
 
     public void OnItemClicked(string id)
     {
+        if (id == "cooked_meat")
+        {
+            if (Inventory.Instance != null && Inventory.Instance.Spend("cooked_meat", 1) && PlayerStats.Instance != null)
+            {
+                PlayerStats.Instance.Eat(45f, 0f);
+                Debug.Log("[UI] ate cooked meat");
+            }
+            return;
+        }
+
+        if (id == "campfire")
+        {
+            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode("campfire");
+            invOpen = false; if (invPanel != null) invPanel.SetActive(false);
+            craftOpen = false; if (craftPanel != null) craftPanel.SetActive(false);
+            RefreshCursor();
+            Debug.Log("[UI] took a Campfire out of the backpack - place it");
+            return;
+        }
+
+        if (id == "meat")
+        {
+            if (Inventory.Instance != null && Inventory.Instance.Spend("meat", 1) && PlayerStats.Instance != null)
+            {
+                PlayerStats.Instance.Eat(26f, 0f);
+                Debug.Log("[UI] ate raw meat");
+            }
+            return;
+        }
+
         if (id == "berry")
         {
             if (Inventory.Instance != null && Inventory.Instance.Spend("berry", 1) && PlayerStats.Instance != null)
@@ -292,7 +327,7 @@ public class GameUI : MonoBehaviour
 
         if (id == "wall")
         {
-            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode();
+            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode("wall");
             invOpen = false; if (invPanel != null) invPanel.SetActive(false);
             craftOpen = false; if (craftPanel != null) craftPanel.SetActive(false);
             RefreshCursor();

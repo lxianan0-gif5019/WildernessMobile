@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// Place-mode: shows a ghost of the wall in front of the camera and drops a real
-// one on interact, spending one Wall item.
+// Build mode: shows a ghost of the item in front of the camera and places it on
+// interact, spending one of that item. Supports walls and campfires.
 public class BuildSystem : MonoBehaviour
 {
     public static BuildSystem Instance;
@@ -9,11 +9,15 @@ public class BuildSystem : MonoBehaviour
     public Camera cam;
     public float range = 8f;
 
+    [Tooltip("Which item is currently being placed: 'wall' or 'campfire'.")]
+    public string buildType = "wall";
+
     public bool Active { get; private set; }
 
     GameObject ghost;
     Material ghostMat;
     Material wallMat;
+    Material fireMat;
     float nextHint;
 
     void Awake()
@@ -29,15 +33,25 @@ public class BuildSystem : MonoBehaviour
         Object.Destroy(ghost.GetComponent<Collider>());
         ghostMat = new Material(shader);
         ghostMat.color = new Color(0.45f, 0.85f, 1f, 1f);
-        var ghostRenderer = ghost.GetComponent<Renderer>();
-        ghostRenderer.sharedMaterial = ghostMat;
-        ghostRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        ghostRenderer.receiveShadows = false;
-        ghost.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
+        var gr = ghost.GetComponent<Renderer>();
+        gr.sharedMaterial = ghostMat;
+        gr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        gr.receiveShadows = false;
         ghost.SetActive(false);
 
         wallMat = new Material(shader);
         wallMat.color = new Color(0.63f, 0.46f, 0.26f, 1f);
+
+        fireMat = new Material(shader);
+        fireMat.color = new Color(0.42f, 0.28f, 0.16f, 1f);
+    }
+
+    public void EnterBuildMode(string type)
+    {
+        buildType = string.IsNullOrEmpty(type) ? "wall" : type;
+        Active = true;
+        if (ghost != null) ghost.SetActive(false);
+        Debug.Log("[Build] build mode on for " + buildType);
     }
 
     void Update()
@@ -45,7 +59,7 @@ public class BuildSystem : MonoBehaviour
         if (InputHub.BuildDown)
         {
             Active = !Active;
-            if (ghost != null) ghost.SetActive(Active);
+            if (ghost != null) ghost.SetActive(false);
             Debug.Log("[Build] mode " + (Active ? "on" : "off"));
         }
 
@@ -54,23 +68,34 @@ public class BuildSystem : MonoBehaviour
         Vector3 point = AimPoint();
         float yaw = cam.transform.eulerAngles.y;
 
-        // Only show the preview when the wall can actually be placed.
-        bool hasWall = Inventory.Instance != null && Inventory.Instance.Count("wall") > 0;
+        bool hasItem = Inventory.Instance != null && Inventory.Instance.Count(buildType) > 0;
         if (ghost != null)
         {
-            ghost.SetActive(hasWall);
-            if (hasWall)
+            ghost.SetActive(hasItem);
+            if (hasItem)
             {
-                ghost.transform.position = point + Vector3.up * 1.25f;
+                if (buildType == "campfire")
+                {
+                    ghost.transform.localScale = new Vector3(1.8f, 0.5f, 1.8f);
+                    ghost.transform.position = point + Vector3.up * 0.25f;
+                }
+                else
+                {
+                    ghost.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
+                    ghost.transform.position = point + Vector3.up * 1.25f;
+                }
                 ghost.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
         }
 
-        bool aimingAtResource = PlayerInteractor.Instance != null && PlayerInteractor.Instance.Current != null;
-        if (InputHub.InteractDown && !aimingAtResource) Place(point, yaw);
+        bool aimingAtThing = PlayerInteractor.Instance != null &&
+                             (PlayerInteractor.Instance.Current != null ||
+                              PlayerInteractor.Instance.CurrentAnimal != null ||
+                              PlayerInteractor.Instance.CurrentWater != null);
+
+        if (InputHub.InteractDown && !aimingAtThing) Place(point, yaw);
     }
 
-    // Nearest hit in front of the camera that is not the player and not the ghost.
     Vector3 AimPoint()
     {
         Vector3 origin = cam.transform.position;
@@ -88,17 +113,26 @@ public class BuildSystem : MonoBehaviour
             if (h.distance < best) { best = h.distance; point = h.point; }
         }
 
-        // Never let the preview sit on top of the camera.
-        Vector3 flat = point - origin;
-        if (flat.magnitude < 2f) point = origin + cam.transform.forward * 2f;
+        if ((point - origin).magnitude < 2f) point = origin + cam.transform.forward * 2f;
         return point;
     }
 
-    public void EnterBuildMode()
+    void Place(Vector3 point, float yaw)
     {
-        Active = true;
-        if (ghost != null) ghost.SetActive(false);
-        Debug.Log("[Build] build mode on (started from inventory)");
+        if (Inventory.Instance == null || !Inventory.Instance.Spend(buildType, 1))
+        {
+            if (Time.unscaledTime >= nextHint)
+            {
+                nextHint = Time.unscaledTime + 1.5f;
+                Debug.Log("[Build] need 1 " + buildType + " - craft it first");
+            }
+            return;
+        }
+
+        if (buildType == "campfire") CreateCampfire(point);
+        else CreateWall(point + Vector3.up * 1.25f, yaw);
+
+        Debug.Log("[Build] placed " + buildType);
     }
 
     /// <summary>Spawns a wall at an exact world position (used by placing and by load).</summary>
@@ -117,19 +151,33 @@ public class BuildSystem : MonoBehaviour
         return wall;
     }
 
-    void Place(Vector3 point, float yaw)
+    /// <summary>Spawns a campfire (light + cooking) at a ground position.</summary>
+    public GameObject CreateCampfire(Vector3 groundPosition)
     {
-        if (Inventory.Instance == null || !Inventory.Instance.Spend("wall", 1))
+        var root = new GameObject("Campfire");
+        root.transform.position = groundPosition;
+
+        for (int i = 0; i < 3; i++)
         {
-            if (Time.unscaledTime >= nextHint)
-            {
-                nextHint = Time.unscaledTime + 1.5f;
-                Debug.Log("[Build] need 1 Wall - open Craft (C) and make one from 2 Planks");
-            }
-            return;
+            var log = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            log.name = "Log" + i;
+            Object.Destroy(log.GetComponent<Collider>());
+            log.transform.SetParent(root.transform, false);
+            log.transform.localScale = new Vector3(0.22f, 0.9f, 0.22f);
+            log.transform.localRotation = Quaternion.Euler(78f, i * 60f, 0f);
+            log.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+            log.GetComponent<Renderer>().sharedMaterial = fireMat;
         }
 
-        CreateWall(point + Vector3.up * 1.25f, yaw);
-        Debug.Log("[Build] placed wall");
+        var col = root.AddComponent<BoxCollider>();
+        col.center = new Vector3(0f, 0.3f, 0f);
+        col.size = new Vector3(1.8f, 0.6f, 1.8f);
+
+        root.AddComponent<Campfire>();
+
+        var structure = root.AddComponent<PlacedStructure>();
+        structure.itemId = "campfire";
+        structure.displayName = "Campfire";
+        return root;
     }
 }

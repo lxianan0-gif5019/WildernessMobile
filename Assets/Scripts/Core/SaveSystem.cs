@@ -17,7 +17,7 @@ public class SaveData
 public class ItemEntry { public string id; public int count; }
 
 [Serializable]
-public class WallEntry { public float x, y, z, ry; }
+public class WallEntry { public float x, y, z, ry; public string type = "wall"; }
 
 // Saves and restores the world: player position, backpack contents, placed walls
 // and the time of day. JSON on disk, no dependencies.
@@ -78,7 +78,7 @@ public class SaveSystem : MonoBehaviour
         foreach (var w in FindObjectsOfType<PlacedStructure>())
         {
             var t = w.transform;
-            data.walls.Add(new WallEntry { x = t.position.x, y = t.position.y, z = t.position.z, ry = t.eulerAngles.y });
+            data.walls.Add(new WallEntry { x = t.position.x, y = t.position.y, z = t.position.z, ry = t.eulerAngles.y, type = w.itemId });
         }
 
         try
@@ -144,7 +144,10 @@ public class SaveSystem : MonoBehaviour
 
         if (data.walls != null && BuildSystem.Instance != null)
             foreach (var w in data.walls)
-                BuildSystem.Instance.CreateWall(new Vector3(w.x, w.y, w.z), w.ry);
+            {
+                if (w.type == "campfire") BuildSystem.Instance.CreateCampfire(new Vector3(w.x, w.y, w.z));
+                else BuildSystem.Instance.CreateWall(new Vector3(w.x, w.y, w.z), w.ry);
+            }
 
         Debug.Log("[Save] loaded " + (data.items != null ? data.items.Count : 0) + " stacks, "
                   + (data.walls != null ? data.walls.Count : 0) + " walls");
