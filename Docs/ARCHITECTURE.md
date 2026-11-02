@@ -106,3 +106,38 @@ SaveSystem.Load()  →  读 JSON
 4. **怎么存盘？**（Save 里加什么、Load 里恢复什么）
 
 答不出来就先别写代码——这四问答完，代码基本就成型了。
+
+---
+
+## 文件体积红线与拆分计划
+
+**规则：单个脚本超过 600 行就要拆。** 新面板一律走新文件，不再往 `GameUI` 里塞。
+
+### 现状（2026-11-02）
+
+| 文件 | 行数 | 状态 |
+|---|---|---|
+| `UI/GameUI.cs` | 468 | 未到线，**暂不拆** |
+| `UI/MenuUI.cs` | 281 | 独立文件，方向正确 |
+| `UI/TouchRouter.cs` | 191 | 独立文件，正确 |
+
+`MenuUI` 独立成文件这件事本身就是示范：**新面板 = 新文件**。
+
+### 到 600 行时的拆分方案（只搬代码，不改逻辑）
+
+30 分钟完成，拆成四个文件：
+
+| 新文件 | 搬什么（对应现在的方法） |
+|---|---|
+| `GameUI.cs` | 只留门面：`Instance`、`PanelOpen`、`Awake/Update` 每帧调度、`MakeImage/MakeText/Anchor` 工具 |
+| `InventoryPanel.cs` | `MakeInventoryRows`、`OnInventoryRow`、`RefreshInventory`、`OnItemClicked` |
+| `CraftPanel.cs` | `MakeCraftRows`、`RecipeLine`、`RefreshCraft`、`Craft` |
+| `BuildHUD.cs` | 建造模式的 prompt 文字、`BuildSystem` 状态提示 |
+
+**拆分原则**
+
+1. **只搬不改**——搬完行为必须完全一致，方便用 git diff 核对
+2. 搬完立刻编译 + Play 跑一遍背包/合成/建造三个面板
+3. `GameUI` 保留对外的公开方法（`PanelOpen`、`OnItemClicked`），内部转调新类
+4. 拆完更新本表
+
