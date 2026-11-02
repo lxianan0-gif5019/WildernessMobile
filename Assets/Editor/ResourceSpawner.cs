@@ -27,9 +27,10 @@ public static class ResourceSpawner
         int trees = SpawnTrees(root.transform, terrain, centre, woodMat, leafMat, 60);
         int rocks = SpawnRocks(root.transform, terrain, centre, stoneMat, 30);
         int bushes = SpawnBushes(root.transform, terrain, centre, bushMat, 25);
+        int iron = SpawnIron(root.transform, terrain, centre, Mat("HarvestIron", new Color(0.30f, 0.26f, 0.24f)), 12);
         SpawnWaterPool(root.transform, terrain, centre, Mat("WaterPool", new Color(0.18f, 0.45f, 0.75f)));
 
-        Debug.Log("[ResourceSpawner] trees=" + trees + " rocks=" + rocks + " bushes=" + bushes + " water=1");
+        Debug.Log("[ResourceSpawner] trees=" + trees + " rocks=" + rocks + " bushes=" + bushes + " iron=" + iron + " water=1");
     }
 
     static Material Mat(string name, Color c)
@@ -167,6 +168,48 @@ public static class ResourceSpawner
             node.extraAmount = 2;
         }
         return count;
+    }
+
+    // Iron veins: darker, huger rocks that need a stone pick.
+    static int SpawnIron(Transform root, Terrain terrain, Vector3 centre, Material mat, int count)
+    {
+        var rnd = new System.Random(4207);
+        int spawned = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (float)rnd.NextDouble() * Mathf.PI * 2f;
+            float radius = 30f + (float)rnd.NextDouble() * 60f;
+            float x = centre.x + Mathf.Cos(angle) * radius;
+            float z = centre.z + Mathf.Sin(angle) * radius;
+            float y = terrain != null ? terrain.SampleHeight(new Vector3(x, 0f, z)) + terrain.transform.position.y : 0f;
+
+            var go = new GameObject("IronVein");
+            go.transform.SetParent(root, false);
+            go.transform.position = new Vector3(x, y, z);
+
+            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.name = "Body";
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+            body.transform.SetParent(go.transform, false);
+            body.transform.localScale = new Vector3(2.4f, 1.8f, 2.0f);
+            body.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+            body.transform.localRotation = Quaternion.Euler(0f, (float)rnd.NextDouble() * 90f, 0f);
+            body.GetComponent<Renderer>().sharedMaterial = mat;
+
+            var col = go.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.7f, 0f);
+            col.size = new Vector3(2.4f, 1.8f, 2.0f);
+
+            var node = go.AddComponent<ResourceNode>();
+            node.itemId = "iron_ore";
+            node.displayName = "Iron Vein";
+            node.hitsToHarvest = 6;
+            node.amountPerHit = 1;
+            node.requiredTool = "stone_pick";
+            spawned++;
+        }
+        return spawned;
     }
 
     // A small pool close to the player so the thirst bar is survivable.

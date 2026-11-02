@@ -19,9 +19,12 @@ public class GameUI : MonoBehaviour
     GameObject invPanel, craftPanel;
     bool invOpen, craftOpen;
 
-    static readonly string[] InvItems = { "wood", "stone", "fiber", "plank", "wall", "campfire", "berry", "meat", "cooked_meat" };
-    readonly Text[] invLabels = new Text[9];
-    readonly GameObject[] invRows = new GameObject[9];
+    const int InvRowCount = 10;
+    readonly Text[] invLabels = new Text[InvRowCount];
+    readonly GameObject[] invRows = new GameObject[InvRowCount];
+    readonly string[] invRowIds = new string[InvRowCount];
+
+    Text[] craftRowLabels;
 
     // survival bars: health, hunger, thirst, stamina
     readonly Image[] statFills = new Image[4];
@@ -36,6 +39,8 @@ public class GameUI : MonoBehaviour
 
         router = GetComponent<TouchRouter>();
         if (router == null) router = gameObject.AddComponent<TouchRouter>();
+
+        if (GetComponent<CraftingController>() == null) gameObject.AddComponent<CraftingController>();
 
         Build();
         RefreshCursor();
@@ -52,16 +57,21 @@ public class GameUI : MonoBehaviour
             foreach (var s in Inventory.Instance.items)
                 sb.Append(ItemDatabase.Display(s.id)).Append("  ").Append(s.count).Append("    ");
             hud.text = sb.Length == 0 ? "Empty pack  -  WASD move, E harvest, Tab bag, C craft, B build" : sb.ToString();
+
+            var cc = CraftingController.Instance;
+            if (cc != null && cc.Busy)
+                hud.text += "      CRAFTING " + cc.active.displayName + " " + Mathf.RoundToInt(cc.Progress * 100f) + "%";
         }
 
         if (prompt != null)
         {
             if (BuildSystem.Instance != null && BuildSystem.Instance.Active)
             {
-                int walls = Inventory.Instance != null ? Inventory.Instance.Count("wall") : 0;
-                prompt.text = walls > 0
-                    ? "BUILD MODE   -   press B to exit,   E to place     Wall: " + walls
-                    : "BUILD MODE   -   press B to exit     no Wall - craft one (C: 2 Plank)";
+                var type = BuildSystem.Instance.buildType;
+                int have = Inventory.Instance != null ? Inventory.Instance.Count(type) : 0;
+                prompt.text = have > 0
+                    ? "BUILD MODE   -   E to place " + ItemDatabase.Display(type) + " (" + have + ")   -   B to exit"
+                    : "BUILD MODE   -   no " + ItemDatabase.Display(type) + " left - craft one first   -   B to exit";
             }
             else
             {
@@ -228,59 +238,72 @@ public class GameUI : MonoBehaviour
 
     void MakeInventoryRows(Transform panel)
     {
-        for (int i = 0; i < InvItems.Length; i++)
+        for (int i = 0; i < InvRowCount; i++)
         {
-            string id = InvItems[i];
+            var img = MakeImage(panel, "Row" + i, new Color(1f, 1f, 1f, 0.10f), circle);
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -104f - i * 44f), new Vector2(640f, 40f), new Vector2(0.5f, 1f));
 
-            var img = MakeImage(panel, "Row_" + id, new Color(1f, 1f, 1f, 0.10f), circle);
-            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -104f - i * 50f), new Vector2(640f, 46f), new Vector2(0.5f, 1f));
-
-            var label = MakeText(img.rectTransform, "Label", "", 23, TextAnchor.MiddleLeft);
-            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 42f), new Vector2(0f, 0.5f));
+            var label = MakeText(img.rectTransform, "Label", "", 22, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(580f, 38f), new Vector2(0f, 0.5f));
 
             invLabels[i] = label;
             invRows[i] = img.gameObject;
+            img.gameObject.SetActive(false);
 
-            router.RegisterButton(img.rectTransform, () => OnItemClicked(id));
+            int captured = i;
+            router.RegisterButton(img.rectTransform, () => OnInventoryRow(captured));
         }
+    }
+
+    void OnInventoryRow(int index)
+    {
+        if (index < 0 || index >= InvRowCount) return;
+        var id = invRowIds[index];
+        if (!string.IsNullOrEmpty(id)) OnItemClicked(id);
     }
 
     void MakeCraftRows(Transform panel)
     {
-        MakeCraftRow(panel, "Plank", "Plank      3 Wood  ->  2", 0);
-        MakeCraftRow(panel, "Wall", "Wall       2 Plank ->  1", 1);
-        MakeCraftRow(panel, "Campfire", "Campfire   2 Stone + 3 Wood -> 1", 2);
+        craftRowLabels = new Text[RecipeCatalog.All.Count];
+        for (int i = 0; i < RecipeCatalog.All.Count; i++)
+        {
+            var r = RecipeCatalog.All[i];
+            var img = MakeImage(panel, "Craft" + r.outputId, new Color(1f, 1f, 1f, 0.12f), circle);
+            Anchor(img.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f - i * 40f), new Vector2(700f, 36f), new Vector2(0.5f, 1f));
+
+            var label = MakeText(img.rectTransform, "Label", "", 20, TextAnchor.MiddleLeft);
+            Anchor(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(670f, 34f), new Vector2(0f, 0.5f));
+
+            craftRowLabels[i] = label;
+
+            string id = r.outputId;
+            router.RegisterButton(img.rectTransform, () => Craft(id));
+        }
     }
 
-    void MakeCraftRow(Transform panel, string recipe, string label, int index)
+    string RecipeLine(CraftingRecipe r, string reason)
     {
-        var img = MakeImage(panel, "Craft" + recipe, new Color(1f, 1f, 1f, 0.14f), circle);
-        Anchor(img.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 130f + index * 96f), new Vector2(520f, 76f), new Vector2(0.5f, 0f));
-
-        var t = MakeText(img.rectTransform, "Label", label, 25, TextAnchor.MiddleCenter);
-        Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500f, 70f), new Vector2(0.5f, 0.5f));
-
-        router.RegisterButton(img.rectTransform, () => Craft(recipe));
+        var sb = new System.Text.StringBuilder();
+        sb.Append(r.displayName.PadRight(13));
+        for (int i = 0; i < r.inputIds.Length; i++)
+        {
+            if (i > 0) sb.Append(" + ");
+            sb.Append(r.inputCounts[i]).Append(' ').Append(ItemDatabase.Display(r.inputIds[i]));
+        }
+        if (!string.IsNullOrEmpty(r.requiresStation))
+            sb.Append("   [").Append(RecipeCatalog.StationLabel(r.requiresStation)).Append(']');
+        sb.Append("   ").Append(r.seconds.ToString("F0")).Append("s");
+        if (!string.IsNullOrEmpty(reason)) sb.Append("   <- ").Append(reason);
+        return sb.ToString();
     }
 
     // ------------------------------------------------------------------ actions
-    public void Craft(string recipe)
+    public void Craft(string outputId)
     {
-        var inv = Inventory.Instance;
-        if (inv == null) return;
-
-        if (recipe == "Plank")
-        {
-            if (inv.Spend("wood", 3)) inv.Add("plank", 2);
-        }
-        else if (recipe == "Wall")
-        {
-            if (inv.Spend("plank", 2)) inv.Add("wall", 1);
-        }
-        else if (recipe == "Campfire")
-        {
-            if (inv.Spend("stone", 2) && inv.Spend("wood", 3)) inv.Add("campfire", 1);
-        }
+        var r = RecipeCatalog.Find(outputId);
+        if (r == null || CraftingController.Instance == null) return;
+        CraftingController.Instance.StartCraft(r);
+        RefreshCraft();
     }
 
     public void OnItemClicked(string id)
@@ -295,13 +318,13 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "campfire")
+        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace")
         {
-            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode("campfire");
+            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode(id);
             invOpen = false; if (invPanel != null) invPanel.SetActive(false);
             craftOpen = false; if (craftPanel != null) craftPanel.SetActive(false);
             RefreshCursor();
-            Debug.Log("[UI] took a Campfire out of the backpack - place it");
+            Debug.Log("[UI] took a " + ItemDatabase.Display(id) + " out of the backpack - place it");
             return;
         }
 
@@ -325,13 +348,9 @@ public class GameUI : MonoBehaviour
             return;
         }
 
-        if (id == "wall")
+        if (id == "wall" || id == "campfire" || id == "workbench" || id == "furnace")
         {
-            if (BuildSystem.Instance != null) BuildSystem.Instance.EnterBuildMode("wall");
-            invOpen = false; if (invPanel != null) invPanel.SetActive(false);
-            craftOpen = false; if (craftPanel != null) craftPanel.SetActive(false);
-            RefreshCursor();
-            Debug.Log("[UI] took a Wall out of the backpack - build mode on");
+            // handled above
         }
         else
         {
@@ -364,28 +383,51 @@ public class GameUI : MonoBehaviour
     {
         if (Inventory.Instance == null) return;
 
-        bool any = false;
-        for (int i = 0; i < InvItems.Length; i++)
+        int row = 0;
+        var list = Inventory.Instance.items;
+        for (int i = 0; i < list.Count && row < InvRowCount; i++)
         {
-            int count = Inventory.Instance.Count(InvItems[i]);
-            if (count > 0) any = true;
-            if (invLabels[i] != null)
-                invLabels[i].text = ItemDatabase.Display(InvItems[i]) + "        x" + count;
-            if (invRows[i] != null)
-                invRows[i].SetActive(count > 0);
+            var s = list[i];
+            if (s.count <= 0) continue;
+            invRowIds[row] = s.id;
+            invRows[row].SetActive(true);
+            invLabels[row].text = ItemDatabase.Display(s.id).PadRight(16) + " x" + s.count;
+            row++;
+        }
+
+        for (int i = row; i < InvRowCount; i++)
+        {
+            invRowIds[i] = null;
+            invRows[i].SetActive(false);
         }
 
         if (invText != null)
-            invText.text = any ? "Tap Wall to take it out and build"
-                               : "(nothing yet - go harvest a tree with E)";
+            invText.text = row == 0 ? "(nothing yet - harvest a tree with E)" : "Tap an item to use it";
     }
 
     void RefreshCraft()
     {
-        if (craftText == null || Inventory.Instance == null) return;
-        craftText.text = "Wood: " + Inventory.Instance.Count("wood")
-                       + "   Plank: " + Inventory.Instance.Count("plank")
-                       + "   Wall: " + Inventory.Instance.Count("wall");
+        if (craftRowLabels == null) return;
+
+        var cc = CraftingController.Instance;
+        for (int i = 0; i < RecipeCatalog.All.Count && i < craftRowLabels.Length; i++)
+        {
+            var r = RecipeCatalog.All[i];
+            string reason = cc != null ? cc.BlockReason(r) : "";
+            craftRowLabels[i].text = RecipeLine(r, reason);
+            craftRowLabels[i].color = string.IsNullOrEmpty(reason) ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+        }
+
+        if (craftText != null && Inventory.Instance != null)
+        {
+            if (cc != null && cc.Busy)
+                craftText.text = "Crafting " + cc.active.displayName + "   " + Mathf.RoundToInt(cc.Progress * 100f) + "%";
+            else
+                craftText.text = "Wood " + Inventory.Instance.Count("wood")
+                               + "   Stone " + Inventory.Instance.Count("stone")
+                               + "   Stick " + Inventory.Instance.Count("stick")
+                               + "   Iron " + Inventory.Instance.Count("iron_ingot");
+        }
     }
 
     // ------------------------------------------------------------------ helpers

@@ -50,7 +50,17 @@ public class PlayerInteractor : MonoBehaviour
         // Cooking at a fire beats picking it up.
         if (CurrentCampfire != null && CurrentCampfire.HasMeat()) { CurrentCampfire.Cook(); return; }
 
-        if (Current != null) { Current.Harvest(); return; }
+        if (Current != null)
+        {
+            if (!string.IsNullOrEmpty(Current.requiredTool) &&
+                (Inventory.Instance == null || Inventory.Instance.Count(Current.requiredTool) == 0))
+            {
+                Debug.Log("[Interact] need " + ItemDatabase.Display(Current.requiredTool) + " to harvest " + Current.displayName);
+                return;
+            }
+            Current.Harvest(HarvestPower());
+            return;
+        }
 
         // In build mode the build system owns the interact key.
         if (BuildSystem.Instance != null && BuildSystem.Instance.Active) return;
@@ -102,6 +112,16 @@ public class PlayerInteractor : MonoBehaviour
             if (h.distance < best) { best = h.distance; found = a; }
         }
         return found;
+    }
+
+    /// <summary>How many harvest hits one press counts for, based on the best tool carried.</summary>
+    float HarvestPower()
+    {
+        var inv = Inventory.Instance;
+        if (inv == null) return 1f;
+        if (inv.Count("iron_axe") > 0 || inv.Count("iron_pick") > 0) return 3f;
+        if (inv.Count("stone_axe") > 0 || inv.Count("stone_pick") > 0) return 2f;
+        return 1f;
     }
 
     WaterSource FindWater()

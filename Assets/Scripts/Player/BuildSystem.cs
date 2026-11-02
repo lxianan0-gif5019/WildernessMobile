@@ -18,6 +18,8 @@ public class BuildSystem : MonoBehaviour
     Material ghostMat;
     Material wallMat;
     Material fireMat;
+    Material benchMat;
+    Material furnaceMat;
     float nextHint;
 
     void Awake()
@@ -44,6 +46,12 @@ public class BuildSystem : MonoBehaviour
 
         fireMat = new Material(shader);
         fireMat.color = new Color(0.42f, 0.28f, 0.16f, 1f);
+
+        benchMat = new Material(shader);
+        benchMat.color = new Color(0.70f, 0.50f, 0.28f, 1f);
+
+        furnaceMat = new Material(shader);
+        furnaceMat.color = new Color(0.48f, 0.46f, 0.44f, 1f);
     }
 
     public void EnterBuildMode(string type)
@@ -78,6 +86,11 @@ public class BuildSystem : MonoBehaviour
                 {
                     ghost.transform.localScale = new Vector3(1.8f, 0.5f, 1.8f);
                     ghost.transform.position = point + Vector3.up * 0.25f;
+                }
+                else if (buildType == "workbench" || buildType == "furnace")
+                {
+                    ghost.transform.localScale = new Vector3(2.0f, 1.2f, 1.2f);
+                    ghost.transform.position = point + Vector3.up * 0.6f;
                 }
                 else
                 {
@@ -130,9 +143,38 @@ public class BuildSystem : MonoBehaviour
         }
 
         if (buildType == "campfire") CreateCampfire(point);
+        else if (buildType == "workbench" || buildType == "furnace") CreateStation(buildType, point);
         else CreateWall(point + Vector3.up * 1.25f, yaw);
 
         Debug.Log("[Build] placed " + buildType);
+    }
+
+    /// <summary>Workbench / furnace: a box that unlocks recipes while you stand near it.</summary>
+    public GameObject CreateStation(string kind, Vector3 groundPosition)
+    {
+        var root = new GameObject(kind == "furnace" ? "Furnace" : "Workbench");
+        root.transform.position = groundPosition;
+
+        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        body.name = "Body";
+        Object.Destroy(body.GetComponent<Collider>());
+        body.transform.SetParent(root.transform, false);
+        body.transform.localScale = new Vector3(2f, 1f, 1.1f);
+        body.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+        body.GetComponent<Renderer>().sharedMaterial = kind == "furnace" ? furnaceMat : benchMat;
+
+        var col = root.AddComponent<BoxCollider>();
+        col.center = new Vector3(0f, 0.5f, 0f);
+        col.size = new Vector3(2f, 1f, 1.1f);
+
+        var station = root.AddComponent<CraftingStation>();
+        station.kind = kind;
+        station.radius = 5f;
+
+        var structure = root.AddComponent<PlacedStructure>();
+        structure.itemId = kind;
+        structure.displayName = kind == "furnace" ? "Furnace" : "Workbench";
+        return root;
     }
 
     /// <summary>Spawns a wall at an exact world position (used by placing and by load).</summary>

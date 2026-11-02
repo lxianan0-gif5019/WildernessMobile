@@ -13,6 +13,10 @@ public class ResourceNode : MonoBehaviour
     public string extraItemId = "";
     public int extraAmount = 1;
 
+    [Header("Tool requirement")]
+    [Tooltip("Item that must be in the backpack to harvest this, e.g. 'stone_pick'.")]
+    public string requiredTool = "";
+
     int remaining;
     Vector3 baseScale;
     bool shaking;
@@ -23,9 +27,9 @@ public class ResourceNode : MonoBehaviour
         baseScale = transform.localScale;
     }
 
-    public bool Harvest()
+    public bool Harvest(float power = 1f)
     {
-        remaining--;
+        remaining -= Mathf.Max(1, Mathf.RoundToInt(power));
         if (Inventory.Instance != null)
         {
             Inventory.Instance.Add(itemId, amountPerHit);

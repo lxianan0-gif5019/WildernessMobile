@@ -5,6 +5,60 @@ using UnityEditor;
 // gameplay code without a keyboard. Remove them once hand testing is done.
 public static class DebugActions
 {
+    [MenuItem("Wilderness/27. Debug Craft Sticks")]
+    public static void CraftSticks()
+    {
+        var r = RecipeCatalog.Find("stick");
+        if (r == null || CraftingController.Instance == null) { Debug.Log("[Debug] no recipe/controller"); return; }
+        bool ok = CraftingController.Instance.StartCraft(r);
+        Debug.Log("[Debug] start stick = " + ok);
+    }
+
+    [MenuItem("Wilderness/24. Debug Tool Prep")]
+    public static void ToolPrep()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null || Inventory.Instance == null) { Debug.Log("[Debug] missing player/inventory"); return; }
+
+        Inventory.Instance.Add("wood", 20);
+        Inventory.Instance.Add("stone", 20);
+
+        var bench = BuildSystem.Instance.CreateStation("workbench", player.transform.position + player.transform.forward * 3f);
+        var furnace = BuildSystem.Instance.CreateStation("furnace", player.transform.position + player.transform.forward * 5f);
+        Debug.Log("[Debug] prep done bench=" + (bench != null) + " furnace=" + (furnace != null)
+                  + " stationNear=" + CraftingStation.Near("workbench", player.transform.position));
+    }
+
+    [MenuItem("Wilderness/25. Debug Craft Stone Axe")]
+    public static void CraftStoneAxe()
+    {
+        var r = RecipeCatalog.Find("stone_axe");
+        if (r == null || CraftingController.Instance == null) { Debug.Log("[Debug] no recipe/controller"); return; }
+        bool ok = CraftingController.Instance.StartCraft(r);
+        Debug.Log("[Debug] start stone_axe = " + ok + " reason=" + CraftingController.Instance.BlockReason(r));
+    }
+
+    [MenuItem("Wilderness/28. Debug Enable Run In Background")]
+    public static void EnableRunInBackground()
+    {
+        UnityEditor.PlayerSettings.runInBackground = true;
+        Debug.Log("[Debug] runInBackground = " + UnityEditor.PlayerSettings.runInBackground);
+    }
+
+    [MenuItem("Wilderness/26. Debug Inventory Dump")]
+    public static void DumpInventory()
+    {
+        if (Inventory.Instance == null) { Debug.Log("[Debug] no inventory"); return; }
+        var sb = new System.Text.StringBuilder("[Debug] inv:");
+        foreach (var s in Inventory.Instance.items) sb.Append(' ').Append(s.id).Append('=').Append(s.count);
+        sb.Append(" | paused=").Append(UnityEditor.EditorApplication.isPaused);
+        sb.Append(" time=").Append(UnityEngine.Time.time.ToString("F2"));
+        if (CraftingController.Instance != null)
+            sb.Append(" busy=").Append(CraftingController.Instance.Busy)
+              .Append(" prog=").Append(CraftingController.Instance.Progress.ToString("F2"));
+        Debug.Log(sb.ToString());
+    }
+
     [MenuItem("Wilderness/23. Debug Campfire Test")]
     public static void CampfireTest()
     {
