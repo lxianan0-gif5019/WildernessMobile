@@ -52,11 +52,26 @@ public class MenuUI : MonoBehaviour
 
     void Update()
     {
+        // Safety: never leave the world frozen with no visible menu.
+        if (InputHub.MenuOpen && !AnyMenuVisible())
+        {
+            Debug.LogWarning("[Menu] menu flag was set with no panel visible - recovering");
+            Close();
+        }
+
         if (Input.GetKeyDown(KeyCode.Escape) && started)
         {
             if (IsOpen) Close();
             else OpenPause();
         }
+    }
+
+    bool AnyMenuVisible()
+    {
+        return (mainPanel != null && mainPanel.activeSelf)
+            || (pausePanel != null && pausePanel.activeSelf)
+            || (settingsPanel != null && settingsPanel.activeSelf)
+            || (slotPanel != null && slotPanel.activeSelf);
     }
 
     // ------------------------------------------------------------------ build

@@ -111,6 +111,7 @@ public class GameUI : MonoBehaviour
         UpdateFireAudio();
         UpdateToast();
         UpdateFps();
+        UpdateDiagnostics();
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
@@ -234,6 +235,11 @@ public class GameUI : MonoBehaviour
         fpsText.color = new Color(0.7f, 0.95f, 0.7f);
         fpsText.gameObject.SetActive(false);
 
+        // on-device diagnostic line (touch problems are invisible without this)
+        diagText = MakeText(content, "Diag", "", 20, TextAnchor.UpperLeft);
+        Anchor(diagText.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -320f), new Vector2(1200f, 60f), new Vector2(0f, 1f));
+        diagText.color = new Color(0.55f, 0.9f, 1f, 0.9f);
+
         Debug.Log("[UI] screen=" + Screen.width + "x" + Screen.height
                   + " canvasPos=" + crt.position
                   + " stickScreen=" + RectTransformUtility.WorldToScreenPoint(null, router.stickArea.position)
@@ -306,6 +312,25 @@ public class GameUI : MonoBehaviour
     Text fpsText;
     float fpsAccum;
     int fpsFrames;
+    Text diagText;
+
+    void UpdateDiagnostics()
+    {
+        if (diagText == null) return;
+
+        var controller = UnityEngine.Object.FindObjectOfType<ThirdPersonController>();
+        var cc = controller != null ? controller.GetComponent<CharacterController>() : null;
+        var rig = CameraRig.Instance;
+
+        diagText.text = "ts=" + Time.timeScale.ToString("F2")
+                      + "  move=" + InputHub.Move.ToString("F2")
+                      + "  look=" + InputHub.LookDelta.ToString("F1")
+                      + "  cc=" + (cc != null ? (cc.enabled ? "on" : "OFF") : "none")
+                      + "  rig=" + (rig != null ? (rig.enabled ? "on" : "off") : "none")
+                      + "  panel=" + (PanelOpen ? "1" : "0")
+                      + "  menu=" + (InputHub.MenuOpen ? "1" : "0")
+                      + "  touch=" + Input.touchCount;
+    }
 
     /// <summary>Short feedback line, e.g. "Wood +1" or "Need a Workbench".</summary>
     public void ShowToast(string message)
