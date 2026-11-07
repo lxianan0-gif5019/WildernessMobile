@@ -67,11 +67,54 @@ public class TouchRouter : MonoBehaviour
                     case TouchPhase.Canceled: End(t.fingerId); break;
                 }
             }
+
+            DropStaleFingers();
         }
         else
         {
+            // No touches at all: any remembered finger is stale and would block
+            // the next look drag forever.
+            if (stickFinger >= 0) ReleaseStick();
+            stickFinger = -1;
+            lookFinger = -1;
+
             Mouse();
         }
+    }
+
+    /// <summary>Forget finger ids that are no longer on screen.</summary>
+    void DropStaleFingers()
+    {
+        if (stickFinger >= 0 && !TouchAlive(stickFinger))
+        {
+            ReleaseStick();
+            stickFinger = -1;
+        }
+        if (lookFinger >= 0 && !TouchAlive(lookFinger)) lookFinger = -1;
+    }
+
+    bool TouchAlive(int id)
+    {
+        for (int i = 0; i < Input.touchCount; i++)
+            if (Input.GetTouch(i).fingerId == id) return true;
+        return false;
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus) ForgetTouches();
+    }
+
+    void OnApplicationPause(bool paused)
+    {
+        if (paused) ForgetTouches();
+    }
+
+    void ForgetTouches()
+    {
+        if (stickFinger >= 0) ReleaseStick();
+        stickFinger = -1;
+        lookFinger = -1;
     }
 
     // ------------------------------------------------------------------ touch
@@ -82,6 +125,10 @@ public class TouchRouter : MonoBehaviour
 
     void Begin(int id, Vector2 pos)
     {
+        // A finger that vanished without an End event must not keep the look slot.
+        if (lookFinger >= 0 && !TouchAlive(lookFinger)) lookFinger = -1;
+        if (stickFinger >= 0 && !TouchAlive(stickFinger)) { ReleaseStick(); stickFinger = -1; }
+
         // While a menu is open only menu buttons respond; the world is frozen.
         if (InputHub.MenuOpen)
         {
