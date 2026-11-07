@@ -11,7 +11,7 @@ public class ThirdPersonController : MonoBehaviour
     public float moveSpeed = 6f;
     public float sprintMultiplier = 1.7f;
     [Tooltip("Higher = snappier turning. Applied frame-rate independently.")]
-    public float turnSpeed = 12f;
+    public float turnSpeed = 8f;
 
     [Header("Jump")]
     public float jumpHeight = 1.4f;
@@ -29,7 +29,7 @@ public class ThirdPersonController : MonoBehaviour
     [Tooltip("Seconds after leaving the ground where a jump is still allowed.")]
     public float coyoteTime = 0.10f;
     [Tooltip("Turn rate used while standing still and looking around.")]
-    public float idleTurnSpeed = 7f;
+    public float idleTurnSpeed = 5f;
 
     CharacterController cc;
     Transform cam;
@@ -64,6 +64,20 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// True when the feet are within a hair of the terrain. CharacterController.isGrounded
+    /// alone reports false while the ground-snap leaves a couple of centimetres of gap,
+    /// which used to make jumping silently fail on flat ground.
+    /// </summary>
+    bool NearGround()
+    {
+        var terrain = Terrain.activeTerrain;
+        if (terrain == null) return false;
+
+        float groundY = terrain.SampleHeight(transform.position) + terrain.transform.position.y;
+        return transform.position.y - groundY <= 0.2f;
+    }
+
     void Update()
     {
         if (cc == null) return;
@@ -72,7 +86,7 @@ public class ThirdPersonController : MonoBehaviour
         float dt = Time.deltaTime;
         if (dt <= 0f) return;
 
-        bool grounded = cc.isGrounded;
+        bool grounded = cc.isGrounded || NearGround();
         if (grounded && verticalVelocity.y < 0f) verticalVelocity.y = -2f;
 
         // --- movement direction is relative to where the camera looks

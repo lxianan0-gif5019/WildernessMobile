@@ -51,6 +51,7 @@ public class TouchRouter : MonoBehaviour
     public int StickFingerId { get { return stickFinger; } }
     public Vector2 LastTouchPos { get; private set; }
     public TouchPhase LastTouchPhase { get; private set; }
+    public string LastTouchTarget { get; private set; } = "-";
 
     public void RegisterButton(RectTransform rect, Action action, int layer = 0)
     {
@@ -158,6 +159,7 @@ public class TouchRouter : MonoBehaviour
         if ((stickFinger < 0 || stickFinger == id) && (InStickZone(pos) || Contains(stickArea, pos)))
         {
             stickFinger = id;
+            LastTouchTarget = "stick";
             ApplyStick(pos);
             return;
         }
@@ -165,6 +167,7 @@ public class TouchRouter : MonoBehaviour
         var hit = HitButton(pos);
         if (hit != null)
         {
+            LastTouchTarget = "btn:" + (hit.rect != null ? hit.rect.name : "?");
             hit.action();
             hit.pressedAt = Time.unscaledTime;
             if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.UiClick, 0.7f);
@@ -173,13 +176,15 @@ public class TouchRouter : MonoBehaviour
 
         // A panel is covering the screen: only its own buttons respond, the world
         // must not move and the camera must not turn behind it.
-        if (GameUI.PanelOpen) return;
+        if (GameUI.PanelOpen) { LastTouchTarget = "panel"; return; }
 
         if (lookFinger < 0)
         {
             lookFinger = id;
             lastLookPos = pos;
+            LastTouchTarget = "look";
         }
+        else LastTouchTarget = "look-busy";
     }
 
     bool InStickZone(Vector2 screenPos)

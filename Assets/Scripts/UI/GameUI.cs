@@ -235,11 +235,10 @@ public class GameUI : MonoBehaviour
         fpsText.color = new Color(0.7f, 0.95f, 0.7f);
         fpsText.gameObject.SetActive(false);
 
-        // on-device diagnostic line (F3); hidden by default so it never clutters the HUD
-        diagText = MakeText(content, "Diag", "", 20, TextAnchor.UpperLeft);
-        Anchor(diagText.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -320f), new Vector2(1400f, 90f), new Vector2(0f, 1f));
+        // on-device diagnostic line (F3 toggles); shown by default while touch is being tuned
+        diagText = MakeText(content, "Diag", "", 20, TextAnchor.LowerLeft);
+        Anchor(diagText.rectTransform, new Vector2(0f, 0f), new Vector2(28f, 18f), new Vector2(1500f, 90f), new Vector2(0f, 0f));
         diagText.color = new Color(0.55f, 0.9f, 1f, 0.9f);
-        diagText.gameObject.SetActive(false);
 
         Debug.Log("[UI] screen=" + Screen.width + "x" + Screen.height
                   + " canvasPos=" + crt.position
@@ -314,18 +313,17 @@ public class GameUI : MonoBehaviour
     float fpsAccum;
     int fpsFrames;
     Text diagText;
-    bool showDebug;
+    bool showDebug = true;
     ThirdPersonController cachedController;
     CharacterController cachedCc;
 
     void UpdateDebugOverlay()
     {
-        if (fpsText == null || diagText == null) return;
+        if (diagText == null) return;
 
         if (Input.GetKeyDown(KeyCode.F3))
         {
             showDebug = !showDebug;
-            fpsText.gameObject.SetActive(showDebug);
             diagText.gameObject.SetActive(showDebug);
         }
         if (!showDebug) return;
@@ -338,10 +336,10 @@ public class GameUI : MonoBehaviour
 
         fpsAccum += Time.unscaledDeltaTime;
         fpsFrames++;
+        string fps = "";
         if (fpsAccum >= 0.5f)
         {
-            float fps = fpsFrames / fpsAccum;
-            fpsText.text = Mathf.RoundToInt(fps) + " FPS   " + (1000f / Mathf.Max(1f, fps)).ToString("F1") + " ms";
+            fps = "  fps=" + Mathf.RoundToInt(fpsFrames / fpsAccum);
             fpsAccum = 0f;
             fpsFrames = 0;
         }
@@ -349,17 +347,13 @@ public class GameUI : MonoBehaviour
         diagText.text = "ts=" + Time.timeScale.ToString("F2")
                       + "  move=" + InputHub.Move.ToString("F2")
                       + "  look=" + InputHub.LookDelta.ToString("F1")
-                      + "  cc=" + (cachedCc != null ? (cachedCc.enabled ? "on" : "OFF") : "none")
-                      + "  rig=" + (rig != null ? (rig.enabled ? "on" : "off") : "none")
-                      + "  panel=" + (PanelOpen ? "1" : "0")
-                      + "  menu=" + (InputHub.MenuOpen ? "1" : "0")
-                      + "  touch=" + Input.touchCount
-                      + "\nls=" + (router != null ? router.lookSensitivity.ToString("F3") : "-")
                       + "  lf=" + (router != null ? router.LookFingerId.ToString() : "-")
-                      + "  sf=" + (router != null ? router.StickFingerId.ToString() : "-")
+                      + "  tgt=" + (router != null ? router.LastTouchTarget : "-")
                       + "  tp=" + (router != null ? router.LastTouchPhase.ToString() : "-")
-                      + "  pos=" + (router != null ? router.LastTouchPos.ToString("F0") : "-")
-                      + "  screen=" + Screen.width + "x" + Screen.height;
+                      + "  touch=" + Input.touchCount
+                      + "  lk=" + (cachedController != null ? "ok" : "-")
+                      + "  cc=" + (cachedCc != null ? (cachedCc.enabled ? "on" : "OFF") : "none")
+                      + fps;
     }
 
     /// <summary>Short feedback line, e.g. "Wood +1" or "Need a Workbench".</summary>
