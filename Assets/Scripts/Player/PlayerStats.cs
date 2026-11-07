@@ -96,7 +96,7 @@ public class PlayerStats : MonoBehaviour
         if (IsDead) return;
         health = Mathf.Max(0f, health - amount);
         if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Hurt);
-        var cam = Camera.main != null ? Camera.main.GetComponent<ThirdPersonCamera>() : null;
+        var cam = CameraRig.Instance;
         if (cam != null) cam.Shake(Mathf.Clamp(amount / 12f, 0.25f, 0.8f));
         if (health <= 0f) Die();
     }

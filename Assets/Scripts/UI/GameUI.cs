@@ -56,6 +56,11 @@ public class GameUI : MonoBehaviour
         if (GetComponent<Tutorial>() == null) gameObject.AddComponent<Tutorial>();
         if (GetComponent<ToolWear>() == null) gameObject.AddComponent<ToolWear>();
 
+        // NOTE: Cinemachine rig (CameraRig) is installed but disabled for now: the
+        // runtime-built vcam stays at the follow target instead of the arm offset,
+        // so the hand-written ThirdPersonCamera remains the active camera.
+        // Revisit with a scene-authored vcam instead of building it at runtime.
+
         Build();
         RefreshCursor();
     }
