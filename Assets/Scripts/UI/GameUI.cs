@@ -203,13 +203,14 @@ public class GameUI : MonoBehaviour
         router.stickKnob = knob.rectTransform;
         router.stickRadius = 110f;
 
-        // --- action buttons: bigger, further from the edge, Chinese labels
-        MakeButton(content, "UseBtn", "使用", new Vector2(1f, 0.30f), 180f, () => InputHub.InteractDown = true);
-        MakeButton(content, "JumpBtn", "跳", new Vector2(1f, 0.12f), 170f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
-        MakeButton(content, "BagBtn", "背包", new Vector2(1f, 0.86f), 170f, () => InputHub.InventoryDown = true);
-        MakeButton(content, "CraftBtn", "制作", new Vector2(1f, 0.68f), 170f, () => InputHub.CraftDown = true);
-        MakeButton(content, "BuildBtn", "建造", new Vector2(1f, 0.50f), 170f, () => InputHub.BuildDown = true);
-        MakeButton(content, "PauseBtn", "❚❚", new Vector2(1f, 0.99f), 120f, () => { if (MenuUI.Instance != null) MenuUI.Instance.OpenPause(); });
+        // --- action buttons: evenly spaced so neighbouring taps never overlap
+        // (170px buttons at 0.18 spacing left almost no gap and made Jump unreliable)
+        MakeButton(content, "UseBtn", "使用", new Vector2(1f, 0.30f), 150f, () => InputHub.InteractDown = true);
+        MakeButton(content, "JumpBtn", "跳", new Vector2(1f, 0.12f), 150f, () => { InputHub.JumpHeld = true; InputHub.JumpDown = true; });
+        MakeButton(content, "BagBtn", "背包", new Vector2(1f, 0.84f), 150f, () => InputHub.InventoryDown = true);
+        MakeButton(content, "CraftBtn", "制作", new Vector2(1f, 0.66f), 150f, () => InputHub.CraftDown = true);
+        MakeButton(content, "BuildBtn", "建造", new Vector2(1f, 0.48f), 150f, () => InputHub.BuildDown = true);
+        MakeButton(content, "PauseBtn", "❚❚", new Vector2(1f, 0.99f), 100f, () => { if (MenuUI.Instance != null) MenuUI.Instance.OpenPause(); });
 
         // --- inventory panel
         invPanel = MakePanel(content, "InventoryPanel", Loc.T("ui.inventory"), new Vector2(1000f, 840f), out invText,
