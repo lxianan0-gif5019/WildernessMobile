@@ -1,4 +1,4 @@
-// 职责：用 Cinemachine 装配第三人称相机，并把输入/抖动接进去
+// 职责：驱动场景里已有的 Cinemachine vcam 旋转（位置交给 3rd Person Follow）
 // 依赖：InputHub、GameUI.PanelOpen、GameSettings、Cinemachine
 using Cinemachine;
 using UnityEngine;
@@ -8,13 +8,12 @@ public class CameraRig : MonoBehaviour
 {
     public static CameraRig Instance;
 
-    [Header("Arm")]
+    [Header("Arm (only used when the rig has to build its own vcam)")]
     public float distance = 4.6f;
-    [Tooltip("Set true once the runtime vcam placement is fixed; the hand-written camera is used otherwise.")]
-    public bool takeOverCamera = false;
     public float shoulderOffset = 0.35f;
     public float verticalArm = 0.45f;
     public Vector3 damping = new Vector3(0.12f, 0.12f, 0.12f);
+    public bool takeOverCamera = true;
 
     [Header("Look")]
     public float minPitch = -12f;
@@ -27,6 +26,7 @@ public class CameraRig : MonoBehaviour
     float yaw;
     float pitch = 16f;
     float shake;
+    bool builtHere;
 
     void Awake()
     {
@@ -38,7 +38,6 @@ public class CameraRig : MonoBehaviour
             return;
         }
 
-        // The old hand-written camera must not fight Cinemachine.
         var old = GetComponent<ThirdPersonCamera>();
         if (old != null) old.enabled = false;
 
@@ -52,7 +51,46 @@ public class CameraRig : MonoBehaviour
         if (player == null) return;
 
         yaw = player.eulerAngles.y;
-        BuildVcam();
+
+        // Prefer a vcam authored in the scene: its component pipeline is already
+        // serialised and validated, which is what Cinemachine expects.
+        vcam = FindSceneVcam();
+        if (vcam == null) BuildVcam();
+
+        follow = vcam.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
+
+        if (vcam.Follow == null)
+        {
+            vcam.Follow = player;
+            vcam.InvalidateComponentPipeline();
+        }
+
+        Debug.Log("[CameraRig] using vcam '" + vcam.name + "' follow=" + (vcam.Follow != null ? vcam.Follow.name : "none")
+                  + " body=" + (follow != null ? "3rdPersonFollow" : "MISSING")
+                  + " dist=" + (follow != null ? follow.CameraDistance.ToString("F1") : "-")
+                  + " builtHere=" + builtHere);
+
+        var comps = vcam.GetComponents<Component>();
+        var names = "";
+        for (int i = 0; i < comps.Length; i++)
+        {
+            if (comps[i] == null) continue;
+            var behaviour = comps[i] as Behaviour;
+            names += comps[i].GetType().Name + "(" + (behaviour == null || behaviour.enabled ? "on" : "off") + ") ";
+        }
+        Debug.Log("[CameraRig] vcam components: " + names);
+
+        // Which component is actually acting as the body?
+        var body = vcam.GetCinemachineComponent<CinemachineComponentBase>();
+        Debug.Log("[CameraRig] active body = " + (body != null ? body.GetType().Name : "NONE"));
+    }
+
+    static CinemachineVirtualCamera FindSceneVcam()
+    {
+        var all = Object.FindObjectsOfType<CinemachineVirtualCamera>();
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] != null) return all[i];
+        return null;
     }
 
     void BuildVcam()
@@ -74,12 +112,9 @@ public class CameraRig : MonoBehaviour
         follow.DampingIntoCollision = 0.05f;
         follow.DampingFromCollision = 0.4f;
 
-        // Follow must be set after the body exists, then the cached pipeline rebuilt,
-        // otherwise Cinemachine keeps the vcam at its spawn transform.
         vcam.Follow = player;
         vcam.InvalidateComponentPipeline();
-
-        Debug.Log("[CameraRig] Cinemachine 3rd person arm ready, distance=" + distance);
+        builtHere = true;
     }
 
     void Update()
@@ -104,20 +139,20 @@ public class CameraRig : MonoBehaviour
             (Random.value * 2f - 1f) * s * 3f,
             0f);
 
-        // Cinemachine positions the camera from this rotation; we only steer it.
+        // Rotation only: Cinemachine owns the position.
         vcam.transform.rotation = Quaternion.Euler(pitch + shakeEuler.x, yaw + shakeEuler.y, 0f);
 
+#if UNITY_EDITOR
         if (Time.frameCount % 120 == 0)
         {
             var camT = Camera.main != null ? Camera.main.transform : null;
-            var brain = GetComponent<CinemachineBrain>();
             Debug.Log("[CamDbg] player=" + (player != null ? player.position.ToString("F1") : "?")
                       + " vcam=" + vcam.transform.position.ToString("F1")
                       + " cam=" + (camT != null ? camT.position.ToString("F1") : "?")
-                      + " dist=" + follow.CameraDistance
-                      + " active=" + (brain != null && brain.ActiveVirtualCamera != null ? brain.ActiveVirtualCamera.Name : "none")
-                      + " rot=" + vcam.transform.eulerAngles.ToString("F0"));
+                      + " dist=" + (follow != null ? follow.CameraDistance.ToString("F1") : "-")
+                      + " built=" + builtHere);
         }
+#endif
     }
 
     public void Shake(float amount)
@@ -125,7 +160,6 @@ public class CameraRig : MonoBehaviour
         shake = Mathf.Clamp(shake + amount, 0f, 1f);
     }
 
-    /// <summary>Used by settings sliders so distance changes apply live.</summary>
     public void SetDistance(float metres)
     {
         distance = Mathf.Clamp(metres, 2.5f, 8f);
