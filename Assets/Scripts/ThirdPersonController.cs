@@ -90,8 +90,9 @@ public class ThirdPersonController : MonoBehaviour
         if (grounded && verticalVelocity.y < 0f) verticalVelocity.y = -2f;
 
         // --- movement direction is relative to where the camera looks
-        float h = InputHub.Move.x;
-        float v = InputHub.Move.y;
+        Vector2 stick = InputHub.DebugMoveActive ? InputHub.DebugMove : InputHub.Move;
+        float h = stick.x;
+        float v = stick.y;
         Vector3 input = Vector3.ClampMagnitude(new Vector3(h, 0f, v), 1f);
 
         Vector3 moveDir;
@@ -158,6 +159,15 @@ public class ThirdPersonController : MonoBehaviour
 
         verticalVelocity.y += gravity * dt;
         cc.Move(verticalVelocity * dt);
+
+        if (Time.frameCount % 60 == 0)
+            Debug.Log("[MoveDbg] dbgMove=" + InputHub.DebugMoveActive
+                      + " stick=" + stick.ToString("F2")
+                      + " throttle=" + throttle.ToString("F2")
+                      + " grounded=" + grounded
+                      + " cc=" + cc.enabled
+                      + " pos=" + transform.position.ToString("F1")
+                      + " vel=" + verticalVelocity.ToString("F1"));
 
         // --- ground snap: keep the feet on sloped terrain instead of hovering
         if (!cc.isGrounded && verticalVelocity.y < 0f)

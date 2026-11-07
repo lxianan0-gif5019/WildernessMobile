@@ -42,5 +42,8 @@ public class PlayerInputReader : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.I)) InputHub.InventoryDown = true;
         if (Input.GetKeyDown(KeyCode.C)) InputHub.CraftDown = true;
         if (Input.GetKeyDown(KeyCode.B)) InputHub.BuildDown = true;
+
+        // Test hook: lets the editor reproduce a held W+A.
+        if (InputHub.DebugMoveActive) InputHub.Move = InputHub.DebugMove;
     }
 }

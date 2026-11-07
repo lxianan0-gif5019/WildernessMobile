@@ -24,6 +24,7 @@ public class CameraRig : MonoBehaviour
     CinemachineVirtualCamera vcam;
     Cinemachine3rdPersonFollow follow;
     Transform player;
+    Transform pivot;
 
     float yaw;
     float pitch = 16f;
@@ -67,11 +68,19 @@ public class CameraRig : MonoBehaviour
 
         follow = vcam.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
 
-        if (vcam.Follow == null)
+        // The arm is driven by the FOLLOW TARGET's rotation, so that target must be a
+        // root object steered by us. If it is a child of the player, every turn of the
+        // character swings the camera (the "W+A whips the view" bug).
+        pivot = vcam.Follow;
+        if (pivot == null)
         {
-            vcam.Follow = player;
-            vcam.InvalidateComponentPipeline();
+            var go = GameObject.Find("CameraPivot");
+            if (go == null) go = new GameObject("CameraPivot");
+            pivot = go.transform;
         }
+        if (pivot.parent != null) pivot.SetParent(null, true);
+
+        vcam.Follow = pivot;
 
         Debug.Log("[CameraRig] using vcam '" + vcam.name + "' follow=" + (vcam.Follow != null ? vcam.Follow.name : "none")
                   + " body=" + (follow != null ? "3rdPersonFollow" : "MISSING")
@@ -151,18 +160,22 @@ public class CameraRig : MonoBehaviour
             (Random.value * 2f - 1f) * s * 3f,
             0f);
 
-        // Rotation only: Cinemachine owns the position.
-        vcam.transform.rotation = Quaternion.Euler(pitchShown + shakeEuler.x, yawShown + shakeEuler.y, 0f);
+        // Drive the pivot: position follows the player, rotation is ours alone.
+        if (pivot != null && player != null)
+        {
+            pivot.position = player.position + Vector3.up * 1.5f;
+            pivot.rotation = Quaternion.Euler(pitchShown + shakeEuler.x, yawShown + shakeEuler.y, 0f);
+        }
 
 #if UNITY_EDITOR
         if (Time.frameCount % 120 == 0)
         {
             var camT = Camera.main != null ? Camera.main.transform : null;
-            Debug.Log("[CamDbg] player=" + (player != null ? player.position.ToString("F1") : "?")
-                      + " vcam=" + vcam.transform.position.ToString("F1")
-                      + " cam=" + (camT != null ? camT.position.ToString("F1") : "?")
-                      + " dist=" + (follow != null ? follow.CameraDistance.ToString("F1") : "-")
-                      + " built=" + builtHere);
+            Debug.Log("[CamDbg] playerYaw=" + (player != null ? player.eulerAngles.y.ToString("F0") : "?")
+                      + " playerPos=" + (player != null ? player.position.ToString("F1") : "?")
+                      + " camYaw=" + (camT != null ? camT.eulerAngles.y.ToString("F0") : "?")
+                      + " camPos=" + (camT != null ? camT.position.ToString("F1") : "?")
+                      + " dist=" + (follow != null ? follow.CameraDistance.ToString("F1") : "-"));
         }
 #endif
     }

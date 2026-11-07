@@ -20,6 +20,10 @@ public static class InputHub
     /// <summary>True while a menu is open: the world ignores all gameplay input.</summary>
     public static bool MenuOpen;
 
+    /// <summary>Test hook: when set, overrides the stick so the editor can reproduce input.</summary>
+    public static bool DebugMoveActive;
+    public static Vector2 DebugMove;
+
     public static void ClearOneShots()
     {
         JumpDown = false;

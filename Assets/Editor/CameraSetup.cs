@@ -45,20 +45,20 @@ public static class CameraSetup
 
         vcam.Priority = 20;
 
-        // Follow a point at head height, not the character's origin (which is at the
-        // feet) - otherwise the whole arm pivots around the ankles.
-        var pivot = controller.transform.Find("CameraPivot");
-        if (pivot == null)
-        {
-            var pivotGo = new GameObject("CameraPivot");
-            pivotGo.transform.SetParent(controller.transform, false);
-            pivot = pivotGo.transform;
-        }
-        pivot.localPosition = new Vector3(0f, 1.5f, 0f);
-        pivot.localRotation = Quaternion.identity;
-        pivot.gameObject.layer = playerLayer;
+        // Follow target must be a ROOT object: the 3rd Person Follow arm is oriented by
+        // the follow target's rotation, so a child of the player would swing with every turn.
+        var pivotGo = GameObject.Find("CameraPivot");
+        if (pivotGo == null) pivotGo = new GameObject("CameraPivot");
+        pivotGo.transform.SetParent(null, true);
+        pivotGo.transform.position = controller.transform.position + Vector3.up * 1.5f;
+        pivotGo.transform.rotation = Quaternion.identity;
+        pivotGo.layer = playerLayer;
 
-        vcam.Follow = pivot;
+        vcam.Follow = pivotGo.transform;
+
+        // Any leftover pivot parented under the player is now unused.
+        var oldPivot = controller.transform.Find("CameraPivot");
+        if (oldPivot != null) Object.DestroyImmediate(oldPivot.gameObject);
 
         var follow = vcam.GetCinemachineComponent<Cinemachine3rdPersonFollow>();
         if (follow == null) follow = vcam.AddCinemachineComponent<Cinemachine3rdPersonFollow>();

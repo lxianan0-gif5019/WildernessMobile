@@ -190,6 +190,41 @@ public static class DebugActions
         Debug.Log("[Debug] time=midnight isNight=" + DayNightCycle.Instance.IsNight);
     }
 
+    [MenuItem("Wilderness/44. Debug Hold W+A")]
+    public static void HoldWA()
+    {
+        InputHub.DebugMoveActive = true;
+        InputHub.DebugMove = new Vector2(-0.707f, 0.707f);   // W + A together
+        Debug.Log("[QA] holding W+A");
+    }
+
+    [MenuItem("Wilderness/45. Debug Release Move")]
+    public static void ReleaseMove()
+    {
+        InputHub.DebugMoveActive = false;
+        InputHub.DebugMove = Vector2.zero;
+        Debug.Log("[QA] movement released");
+    }
+
+    [MenuItem("Wilderness/43. Debug Character QA")]
+    public static void CharacterQA()
+    {
+        if (DayNightCycle.Instance != null)
+        {
+            DayNightCycle.Instance.timeOfDay = 0.42f;
+            DayNightCycle.Instance.Apply(0.42f);
+        }
+
+        var player = GameObject.FindWithTag("Player");
+        if (player == null) { Debug.Log("[QA] no player"); return; }
+
+        var model = player.transform.Find("PlayerModel");
+        if (model == null) { Debug.Log("[QA] no PlayerModel"); return; }
+
+        model.localRotation = model.localRotation * Quaternion.Euler(0f, 180f, 0f);
+        Debug.Log("[QA] midday + model turned to face the camera");
+    }
+
     [MenuItem("Wilderness/30. Debug Set Day")]
     public static void SetDay()
     {

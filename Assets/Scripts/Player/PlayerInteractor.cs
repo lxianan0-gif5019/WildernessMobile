@@ -92,6 +92,7 @@ public class PlayerInteractor : MonoBehaviour
                 return;
             }
             Current.Harvest(HarvestPower());
+            if (PlayerVisual.Instance != null) PlayerVisual.Instance.TriggerSlash();
             if (AudioManager.Instance != null) AudioManager.Instance.Play(AudioManager.Sfx.Chop);
             Debris.Burst(Current != null ? Current.transform.position + Vector3.up : transform.position + transform.forward,
                          new Color(0.45f, 0.30f, 0.16f), 6);
