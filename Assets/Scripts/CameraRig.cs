@@ -18,6 +18,8 @@ public class CameraRig : MonoBehaviour
     [Header("Look")]
     public float minPitch = -12f;
     public float maxPitch = 62f;
+    [Tooltip("Seconds of smoothing on the look angles. Removes touch jitter without adding lag.")]
+    public float lookSmoothing = 0.05f;
 
     CinemachineVirtualCamera vcam;
     Cinemachine3rdPersonFollow follow;
@@ -25,6 +27,10 @@ public class CameraRig : MonoBehaviour
 
     float yaw;
     float pitch = 16f;
+    float yawShown;
+    float pitchShown;
+    float yawVelocity;
+    float pitchVelocity;
     float shake;
     bool builtHere;
 
@@ -51,6 +57,8 @@ public class CameraRig : MonoBehaviour
         if (player == null) return;
 
         yaw = player.eulerAngles.y;
+        yawShown = yaw;
+        pitchShown = pitch;
 
         // Prefer a vcam authored in the scene: its component pipeline is already
         // serialised and validated, which is what Cinemachine expects.
@@ -133,6 +141,10 @@ public class CameraRig : MonoBehaviour
 
         if (shake > 0.0001f) shake = Mathf.Max(0f, shake - Time.deltaTime * 2.2f);
 
+        // Smooth the angles, not the transform: kills touch jitter without adding lag.
+        yawShown = Mathf.SmoothDampAngle(yawShown, yaw, ref yawVelocity, lookSmoothing, Mathf.Infinity, Time.unscaledDeltaTime);
+        pitchShown = Mathf.SmoothDampAngle(pitchShown, pitch, ref pitchVelocity, lookSmoothing, Mathf.Infinity, Time.unscaledDeltaTime);
+
         float s = shake * shake;
         var shakeEuler = new Vector3(
             (Random.value * 2f - 1f) * s * 3f,
@@ -140,7 +152,7 @@ public class CameraRig : MonoBehaviour
             0f);
 
         // Rotation only: Cinemachine owns the position.
-        vcam.transform.rotation = Quaternion.Euler(pitch + shakeEuler.x, yaw + shakeEuler.y, 0f);
+        vcam.transform.rotation = Quaternion.Euler(pitchShown + shakeEuler.x, yawShown + shakeEuler.y, 0f);
 
 #if UNITY_EDITOR
         if (Time.frameCount % 120 == 0)

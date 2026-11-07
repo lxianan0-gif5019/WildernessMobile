@@ -110,8 +110,7 @@ public class GameUI : MonoBehaviour
         UpdateDamageFeedback();
         UpdateFireAudio();
         UpdateToast();
-        UpdateFps();
-        UpdateDiagnostics();
+        UpdateDebugOverlay();
 
         if (invOpen) RefreshInventory();
         if (craftOpen) RefreshCraft();
@@ -235,10 +234,11 @@ public class GameUI : MonoBehaviour
         fpsText.color = new Color(0.7f, 0.95f, 0.7f);
         fpsText.gameObject.SetActive(false);
 
-        // on-device diagnostic line (touch problems are invisible without this)
+        // on-device diagnostic line (F3); hidden by default so it never clutters the HUD
         diagText = MakeText(content, "Diag", "", 20, TextAnchor.UpperLeft);
-        Anchor(diagText.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -320f), new Vector2(1200f, 60f), new Vector2(0f, 1f));
+        Anchor(diagText.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -320f), new Vector2(1400f, 90f), new Vector2(0f, 1f));
         diagText.color = new Color(0.55f, 0.9f, 1f, 0.9f);
+        diagText.gameObject.SetActive(false);
 
         Debug.Log("[UI] screen=" + Screen.width + "x" + Screen.height
                   + " canvasPos=" + crt.position
@@ -313,23 +313,52 @@ public class GameUI : MonoBehaviour
     float fpsAccum;
     int fpsFrames;
     Text diagText;
+    bool showDebug;
+    ThirdPersonController cachedController;
+    CharacterController cachedCc;
 
-    void UpdateDiagnostics()
+    void UpdateDebugOverlay()
     {
-        if (diagText == null) return;
+        if (fpsText == null || diagText == null) return;
 
-        var controller = UnityEngine.Object.FindObjectOfType<ThirdPersonController>();
-        var cc = controller != null ? controller.GetComponent<CharacterController>() : null;
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            showDebug = !showDebug;
+            fpsText.gameObject.SetActive(showDebug);
+            diagText.gameObject.SetActive(showDebug);
+        }
+        if (!showDebug) return;
+
+        // Cache the lookups: FindObjectOfType every frame is a real cost on mobile.
+        if (cachedController == null) cachedController = UnityEngine.Object.FindObjectOfType<ThirdPersonController>();
+        if (cachedController != null && cachedCc == null) cachedCc = cachedController.GetComponent<CharacterController>();
+
         var rig = CameraRig.Instance;
+
+        fpsAccum += Time.unscaledDeltaTime;
+        fpsFrames++;
+        if (fpsAccum >= 0.5f)
+        {
+            float fps = fpsFrames / fpsAccum;
+            fpsText.text = Mathf.RoundToInt(fps) + " FPS   " + (1000f / Mathf.Max(1f, fps)).ToString("F1") + " ms";
+            fpsAccum = 0f;
+            fpsFrames = 0;
+        }
 
         diagText.text = "ts=" + Time.timeScale.ToString("F2")
                       + "  move=" + InputHub.Move.ToString("F2")
                       + "  look=" + InputHub.LookDelta.ToString("F1")
-                      + "  cc=" + (cc != null ? (cc.enabled ? "on" : "OFF") : "none")
+                      + "  cc=" + (cachedCc != null ? (cachedCc.enabled ? "on" : "OFF") : "none")
                       + "  rig=" + (rig != null ? (rig.enabled ? "on" : "off") : "none")
                       + "  panel=" + (PanelOpen ? "1" : "0")
                       + "  menu=" + (InputHub.MenuOpen ? "1" : "0")
-                      + "  touch=" + Input.touchCount;
+                      + "  touch=" + Input.touchCount
+                      + "\nls=" + (router != null ? router.lookSensitivity.ToString("F3") : "-")
+                      + "  lf=" + (router != null ? router.LookFingerId.ToString() : "-")
+                      + "  sf=" + (router != null ? router.StickFingerId.ToString() : "-")
+                      + "  tp=" + (router != null ? router.LastTouchPhase.ToString() : "-")
+                      + "  pos=" + (router != null ? router.LastTouchPos.ToString("F0") : "-")
+                      + "  screen=" + Screen.width + "x" + Screen.height;
     }
 
     /// <summary>Short feedback line, e.g. "Wood +1" or "Need a Workbench".</summary>
@@ -345,20 +374,7 @@ public class GameUI : MonoBehaviour
 
     void UpdateFps()
     {
-        if (fpsText == null) return;
-
-        if (Input.GetKeyDown(KeyCode.F3)) fpsText.gameObject.SetActive(!fpsText.gameObject.activeSelf);
-        if (!fpsText.gameObject.activeSelf) return;
-
-        fpsAccum += Time.unscaledDeltaTime;
-        fpsFrames++;
-        if (fpsAccum >= 0.5f)
-        {
-            float fps = fpsFrames / fpsAccum;
-            fpsText.text = Mathf.RoundToInt(fps) + " FPS   " + (1000f / Mathf.Max(1f, fps)).ToString("F1") + " ms";
-            fpsAccum = 0f;
-            fpsFrames = 0;
-        }
+        // Kept for API compatibility; the F3 overlay now lives in UpdateDebugOverlay.
     }
 
     void UpdateToast()

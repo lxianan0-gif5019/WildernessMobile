@@ -22,7 +22,6 @@ public class MenuUI : MonoBehaviour
     Text masterValue, sfxValue, lookValue, stickValue, qualityValue, invertValue, languageValue;
     Text slotTitle;
     readonly List<Text> slotLabels = new List<Text>();
-    bool inSettings;
     bool saveMode;
     bool started;
 
@@ -408,8 +407,7 @@ public class MenuUI : MonoBehaviour
 
     public void OpenPause()
     {
-        inSettings = false;
-        mainPanel.SetActive(false);
+                mainPanel.SetActive(false);
         pausePanel.SetActive(true);
         settingsPanel.SetActive(false);
         slotPanel.SetActive(false);
@@ -418,8 +416,7 @@ public class MenuUI : MonoBehaviour
 
     void OpenSettings(bool fromPause)
     {
-        inSettings = true;
-        cameFromPause = fromPause;
+                cameFromPause = fromPause;
         mainPanel.SetActive(false);
         pausePanel.SetActive(false);
         slotPanel.SetActive(false);

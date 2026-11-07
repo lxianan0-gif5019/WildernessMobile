@@ -53,8 +53,9 @@ public static class GameSettings
 
         if (TouchRouter.Instance != null)
         {
-            TouchRouter.Instance.lookSensitivity = LookSensitivity;
-            TouchRouter.Instance.stickRadius = StickRadius;
+            // Never let a bad stored value silently kill look input.
+            TouchRouter.Instance.lookSensitivity = Mathf.Max(0.02f, LookSensitivity);
+            TouchRouter.Instance.stickRadius = Mathf.Max(40f, StickRadius);
         }
 
         switch (Quality)

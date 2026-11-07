@@ -41,7 +41,16 @@ public class TouchRouter : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        if (lookSensitivity <= 0.001f) lookSensitivity = 0.085f;
+        if (stickRadius <= 1f) stickRadius = 110f;
     }
+
+    // Exposed for the on-device diagnostic line.
+    public int LookFingerId { get { return lookFinger; } }
+    public int StickFingerId { get { return stickFinger; } }
+    public Vector2 LastTouchPos { get; private set; }
+    public TouchPhase LastTouchPhase { get; private set; }
 
     public void RegisterButton(RectTransform rect, Action action, int layer = 0)
     {
@@ -58,6 +67,8 @@ public class TouchRouter : MonoBehaviour
             for (int i = 0; i < Input.touchCount; i++)
             {
                 var t = Input.GetTouch(i);
+                LastTouchPos = t.position;
+                LastTouchPhase = t.phase;
                 switch (t.phase)
                 {
                     case TouchPhase.Began: Begin(t.fingerId, t.position); break;
